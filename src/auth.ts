@@ -16,7 +16,7 @@ import { API_BASE } from './core/api';
 import { ProfileViewManager } from './profile-view';
 import { AdminManager } from './admin';
 import { ToastManager } from './toast';
-import { createLegacyAuthToken, hashPasswordClient } from './utils/authCrypto';
+import { hashPasswordClient } from './utils/authCrypto';
 import { DashboardManager } from './dashboard';
 import { renderLucideIcons } from './core/ui';
 import { DatabaseManager } from './database';
@@ -443,11 +443,8 @@ export class AuthManager {
         }
 
         try {
-            // Pre-hash password client-side so plaintext is never transmitted in Network tab
-            const [hashedPassword, legacyAuth] = await Promise.all([
-                hashPasswordClient(rawPassword),
-                createLegacyAuthToken(rawPassword)
-            ]);
+            // Hash password client-side so plaintext is never transmitted in Network tab
+            const hashedPassword = await hashPasswordClient(rawPassword);
 
             const payload: Record<string, any> = {
                 identifier,
@@ -456,9 +453,6 @@ export class AuthManager {
                 name: identifier,
                 password: hashedPassword
             };
-            if (legacyAuth) {
-                payload.legacy_auth = legacyAuth;
-            }
 
             const res = await fetch(`${API_BASE}/auth/login`, {
                 method: 'POST',

@@ -1,4 +1,4 @@
-# Backend Handoff Guide — v1.5.0
+# Backend Handoff Guide, v1.5.0
 
 **Date:** 2026-08-17
 **Branch:** `kush-backend`
@@ -10,51 +10,51 @@
 
 ### 1.1 Redis Sessions & Caching (`backend/src/config/redis.ts`)
 
-- **Dual-mode client**: When `REDIS_URL` is set, uses `ioredis` for session storage, API response caching, and TTL-based OTP state. When unset, falls back to an in-memory `Map` with identical async TTL semantics.
-- **Session store**: `connect-redis` (`RedisStore`) backs `express-session` cookies. Sessions are prefixed `cicr:sess:`, httpOnly, 7-day TTL, SameSite=lax.
-- **API response caching**: Inventory list (`GET /api/items`) and individual items (`GET /api/items/:id`) are cached for 30 seconds via `cacheGetJSON` / `cacheSetJSON`. Cache is invalidated on create/update/delete/borrow/return via `invalidateItemsCache()`.
-- **Admin directory caching**: `GET /api/borrow/admins` cached for 60 seconds.
-- **Graceful degradation**: Every Redis call is wrapped in try/catch. Connection errors log a warning and fall through to the in-memory store — no request ever crashes on Redis failure.
-- **BullMQ email queue** (`backend/src/config/emailQueue.ts`): When Redis is configured, outbound emails are enqueued via BullMQ with exponential backoff (3 attempts, 2s base). The worker runs with concurrency 5. Without Redis, `emailService.ts` falls back to direct `transporter.sendMail()`.
+* **Dual-mode client**: When `REDIS_URL` is set, uses `ioredis` for session storage, API response caching, and TTL-based OTP state. When unset, falls back to an in-memory `Map` with identical async TTL semantics.
+* **Session store**: `connect-redis` (`RedisStore`) backs `express-session` cookies. Sessions are prefixed `cicr:sess:`, httpOnly, 7-day TTL, SameSite=lax.
+* **API response caching**: Inventory list (`GET /api/items`) and individual items (`GET /api/items/:id`) are cached for 30 seconds via `cacheGetJSON` / `cacheSetJSON`. Cache is invalidated on create/update/delete/borrow/return via `invalidateItemsCache()`.
+* **Admin directory caching**: `GET /api/borrow/admins` cached for 60 seconds.
+* **Graceful degradation**: Every Redis call is wrapped in try/catch. Connection errors log a warning and fall through to the in-memory store, no request ever crashes on Redis failure.
+* **BullMQ email queue** (`backend/src/config/emailQueue.ts`): When Redis is configured, outbound emails are enqueued via BullMQ with exponential backoff (3 attempts, 2s base). The worker runs with concurrency 5. Without Redis, `emailService.ts` falls back to direct `transporter.sendMail()`.
 
 ### 1.2 Master-Slave DB Read/Write Splitting (`backend/src/config/database.ts`)
 
-- **Two Supabase clients**: `dbWrite` (primary, for INSERT/UPDATE/DELETE) and `dbRead` (replica when `SUPABASE_READ_URL` is set, otherwise primary).
-- **All SELECTs** route through `dbRead`; all mutations route through `dbWrite` (aliased as `supabase` for backward compatibility).
-- **Replica-ready**: Set `SUPABASE_READ_URL` in `.env` to point reads at a read replica. Without it, both clients hit the primary — identical behavior on the free tier.
-- **Controller coverage**: `auth.controller.ts`, `borrow.controller.ts`, `inventory.controller.ts`, `dashboard.controller.ts`, `system.controller.ts`, and `reminderService.ts` all use `dbRead` for queries.
+* **Two Supabase clients**: `dbWrite` (primary, for INSERT/UPDATE/DELETE) and `dbRead` (replica when `SUPABASE_READ_URL` is set, otherwise primary).
+* **All SELECTs** route through `dbRead`; all mutations route through `dbWrite` (aliased as `supabase` for backward compatibility).
+* **Replica-ready**: Set `SUPABASE_READ_URL` in `.env` to point reads at a read replica. Without it, both clients hit the primary, identical behavior on the free tier.
+* **Controller coverage**: `auth.controller.ts`, `borrow.controller.ts`, `inventory.controller.ts`, `dashboard.controller.ts`, `system.controller.ts`, and `reminderService.ts` all use `dbRead` for queries.
 
 ### 1.3 Hardened JWT/RBAC Auth (`backend/src/middleware/auth.middleware.ts`)
 
-- **JWT-first with session fallback**: Bearer JWT is verified with strict claim validation (role restricted to ADMIN|MEMBER, optional `JWT_ISSUER`/`JWT_AUDIENCE`). If no Bearer token, falls back to the Redis-backed session cookie.
-- **Role-based access control**: `requireAdmin` middleware for admin-only endpoints; `requireRole('ADMIN')` / `requireRole('ADMIN', 'MEMBER')` for fine-grained RBAC.
-- **Session invalidation**: `clearSessionUser()` destroys the server-side session (used on logout).
-- **Token claims**: JWT carries `{ id, name, email, role }` with 7-day expiry.
+* **JWT-first with session fallback**: Bearer JWT is verified with strict claim validation (role restricted to ADMIN|MEMBER, optional `JWT_ISSUER`/`JWT_AUDIENCE`). If no Bearer token, falls back to the Redis-backed session cookie.
+* **Role-based access control**: `requireAdmin` middleware for admin-only endpoints; `requireRole('ADMIN')` / `requireRole('ADMIN', 'MEMBER')` for fine-grained RBAC.
+* **Session invalidation**: `clearSessionUser()` destroys the server-side session (used on logout).
+* **Token claims**: JWT carries `{ id, name, email, role }` with 7-day expiry.
 
 ### 1.4 Institutional Email Support (`@mail.jiit.ac.in`)
 
-- **Email validator** (`backend/src/validators/email.validator.ts`): Accepts 12-digit numeric student IDs on any `jiit.ac.in` subdomain (`^[0-9]{12}@[a-z0-9-]+\.jiit\.ac\.in$`), plus standard email formats.
-- **SMTP headers**: Custom `Message-ID` per RFC 2822 (domain derived from `SMTP_HOST`), `X-CICR-Mailer`, `X-Priority`, `Importance`, `List-Unsubscribe`, `Reply-To`.
-- **Plain-text fallback** on every HTML template to avoid institutional spam sinkholing.
-- **Sender identity**: `"CICR Inventory Support" <kushagragargdelhi@gmail.com>` with `Reply-To`.
+* **Email validator** (`backend/src/validators/email.validator.ts`): Accepts 12-digit numeric student IDs on any `jiit.ac.in` subdomain (`^[0-9]{12}@[a-z0-9-]+\.jiit\.ac\.in$`), plus standard email formats.
+* **SMTP headers**: Custom `Message-ID` per RFC 2822 (domain derived from `SMTP_HOST`), `X-CICR-Mailer`, `X-Priority`, `Importance`, `List-Unsubscribe`, `Reply-To`.
+* **Plain-text fallback** on every HTML template to avoid institutional spam sinkholing.
+* **Sender identity**: `"CICR Inventory Support" <kushagragargdelhi@gmail.com>` with `Reply-To`.
 
 ### 1.5 OTP Approval Workflow
 
-- 6-digit cryptographic OTP, 10-minute TTL, 5-attempt verification budget, hashed at rest.
-- Admin directory (`modules/borrow/adminDirectory.ts`) maps admin IDs to emails.
-- Full flow: `POST /api/borrow/request-otp` → admin receives OTP → `POST /api/borrow/verify-otp` → borrow record created + stock decremented + confirmation email dispatched.
+* 6-digit cryptographic OTP, 10-minute TTL, 5-attempt verification budget, hashed at rest.
+* Admin directory (`modules/borrow/adminDirectory.ts`) maps admin IDs to emails.
+* Full flow: `POST /api/borrow/request-otp` → admin receives OTP → `POST /api/borrow/verify-otp` → borrow record created + stock decremented + confirmation email dispatched.
 
 ### 1.6 Email Notification System
 
-- **5 email types**: OTP (high priority), borrow confirmation, return confirmation, upcoming-due reminder (Day N-1), overdue/due-today reminder.
-- **Async dispatch**: Fire-and-forget `.catch()` on all email sends — SMTP latency never blocks HTTP responses.
-- **Reminder scheduler**: `node-cron` runs daily at 09:00 + on boot. Scans for due/overdue borrows and emails borrowers.
-- **Mock mode**: When `SMTP_USER` is unset, all emails are logged to console — development never breaks.
+* **5 email types**: OTP (high priority), borrow confirmation, return confirmation, upcoming-due reminder (Day N-1), overdue/due-today reminder.
+* **Async dispatch**: Fire-and-forget `.catch()` on all email sends, SMTP latency never blocks HTTP responses.
+* **Reminder scheduler**: `node-cron` runs daily at 09:00 + on boot. Scans for due/overdue borrows and emails borrowers.
+* **Mock mode**: When `SMTP_USER` is unset, all emails are logged to console, development never breaks.
 
 ### 1.7 Rental Duration Cap
 
-- `duration_days` clamped to **1–30** (default 5) via `parseRentalDays()` in `borrow.controller.ts`.
-- `due_date` computed as `borrowed_at + duration_days`.
+* `duration_days` clamped to **1–30** (default 5) via `parseRentalDays()` in `borrow.controller.ts`.
+* `due_date` computed as `borrowed_at + duration_days`.
 
 ---
 
@@ -129,11 +129,11 @@ SUPABASE_URL=https://<project-ref>.supabase.co
 SUPABASE_ANON_KEY=<supabase-anon-key>
 JWT_SECRET=<random-secret-min-32-chars>
 
-# === Redis (optional — enables sessions, caching, BullMQ email queue) ===
+# === Redis (optional, enables sessions, caching, BullMQ email queue) ===
 REDIS_URL=redis://127.0.0.1:6379
 SESSION_SECRET=<random-session-secret>
 
-# === Read Replica (optional — falls back to SUPABASE_URL when unset) ===
+# === Read Replica (optional, falls back to SUPABASE_URL when unset) ===
 SUPABASE_READ_URL=
 
 # === Email (mock mode when SMTP_USER is empty) ===
@@ -143,7 +143,7 @@ SMTP_USER=your-email@gmail.com
 SMTP_PASS=your-16-char-app-password
 SMTP_FROM="CICR Inventory Support" <your-email@gmail.com>
 
-# === JWT (optional — for issuer/audience validation) ===
+# === JWT (optional, for issuer/audience validation) ===
 JWT_ISSUER=
 JWT_AUDIENCE=
 
@@ -202,7 +202,7 @@ The frontend (`src/main.ts`) currently targets `http://localhost:5000/api` via t
 The backend now accepts both JWT Bearer tokens and Redis-backed session cookies. The frontend should:
 
 ```typescript
-// src/main.ts — replace direct fetch with credentials-aware fetch
+// src/main.ts, replace direct fetch with credentials-aware fetch
 const apiFetch = async (url: string, options: RequestInit = {}) => {
   const token = localStorage.getItem('token');
   return fetch(`${API_BASE}${url}`, {
@@ -231,14 +231,14 @@ The borrow flow currently uses direct `POST /api/borrow` in the UI. Wire the OTP
 After `POST /api/auth/login` returns a JWT:
 
 1. Store the JWT in `localStorage` (existing behavior).
-2. The session cookie is set automatically by `express-session` on the login response — no extra work needed if `credentials: 'include'` is used on subsequent requests.
+2. The session cookie is set automatically by `express-session` on the login response, no extra work needed if `credentials: 'include'` is used on subsequent requests.
 
 ### 6.4 Logout → Session Invalidation
 
 On logout:
 
 1. Clear `localStorage` token.
-2. Call `POST /api/auth/logout` (if added) or simply redirect — the server-side session is invalidated on the next request if the cookie expires.
+2. Call `POST /api/auth/logout` (if added) or simply redirect, the server-side session is invalidated on the next request if the cookie expires.
 
 ### 6.5 Environment-Aware API_BASE
 
@@ -254,9 +254,9 @@ const API_BASE = import.meta.env.PROD
 
 The `GET /api/system/bote-metrics` and `GET /api/system/simulate-scale` endpoints are public. The admin dashboard could display:
 
-- Daily email capacity remaining
-- Active borrows vs. Gmail cap
-- Simulated scale for N users
+* Daily email capacity remaining
+* Active borrows vs. Gmail cap
+* Simulated scale for N users
 
 ---
 
@@ -264,9 +264,9 @@ The `GET /api/system/bote-metrics` and `GET /api/system/simulate-scale` endpoint
 
 | Role | Email | Notes |
 |------|-------|-------|
-| Admin | `kushagragargdelhi@gmail.com` | KUSH — OTP approval directory |
-| Student | `kushgdhi@gmail.com` | `kush` — original test student |
-| Student | `992501030406@mail.jiit.ac.in` | Institutional — live OTP probe target |
+| Admin | `kushagragargdelhi@gmail.com` | KUSH, OTP approval directory |
+| Student | `kushgdhi@gmail.com` | `kush`, original test student |
+| Student | `992501030406@mail.jiit.ac.in` | Institutional, live OTP probe target |
 | Student | `992501030395@mail.jiit.ac.in` | Institutional |
 | Student | `992501030399@mail.jiit.ac.in` | Institutional |
 | Student | `992401210050@mail.jiit.ac.in` | Institutional |

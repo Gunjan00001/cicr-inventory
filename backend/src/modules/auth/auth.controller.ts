@@ -303,7 +303,7 @@ export const login = async (req: Request, res: Response) => {
     }
 
     if (!user) {
-      return res.status(401).json({ status: 'error', message: 'Invalid credentials. User not found by email, username, or name.' });
+      return res.status(401).json({ status: 'error', message: 'Invalid credentials.' });
     }
 
     if (!isValidEmail(user.email) && user.role !== 'ADMIN') {
@@ -339,7 +339,7 @@ export const login = async (req: Request, res: Response) => {
     }
 
     if (!validPassword) {
-      return res.status(401).json({ status: 'error', message: 'Invalid credentials. Incorrect password.' });
+      return res.status(401).json({ status: 'error', message: 'Invalid credentials.' });
     }
 
     // H-1 FIX: ADMIN derives from the exact allow-list email only; stored name never grants ADMIN.

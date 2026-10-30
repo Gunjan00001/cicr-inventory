@@ -7,7 +7,7 @@
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 
 function safeKeyGenerator(req: any): string {
-  return ipKeyGenerator(req);
+  return ipKeyGenerator(req.ip || req.socket?.remoteAddress || 'unknown');
 }
 
 // ---------------------------------------------------------------- general API

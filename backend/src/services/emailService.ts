@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import nodemailer from 'nodemailer';
+import type { Transporter, SendMailOptions } from 'nodemailer';
 import crypto from 'crypto';
 import dns from 'dns';
 import { enqueueEmail } from '../config/emailQueue';
@@ -72,7 +73,7 @@ export const isSmtpConfigured = (): boolean => {
   return Boolean(getSmtpUser() && getSmtpPass());
 };
 
-let cachedTransporter: nodemailer.Transporter | null = null;
+let cachedTransporter: Transporter | null = null;
 let lastTransporterUser = '';
 let lastTransporterPass = '';
 let lastTransporterPort = 0;
@@ -120,7 +121,7 @@ export const TESTING_TEST_EMAIL = process.env.TESTING_TEST_EMAIL || DEFAULT_TEST
 
 // Transporter proxy with hard safety suppression switch and testing routing override
 const transporter = {
-  sendMail: async (options: nodemailer.SendMailOptions) => {
+  sendMail: async (options: SendMailOptions) => {
     if (!EMAILS_ENABLED || process.env.DISABLE_ALL_EMAILS === 'true') {
       console.log(`[EMAIL DISPATCH SUPPRESSED] Outgoing mail to ${JSON.stringify(options.to)} blocked (all emails disabled).`);
       return { messageId: '<suppressed@cicr.internal>', accepted: [], rejected: [], response: '250 Mock/Suppressed OK' } as any;

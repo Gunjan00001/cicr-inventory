@@ -238,8 +238,8 @@ export function buildHealthPayload(): HealthPayload {
     },
     neon: {
       configured: neonConfigured,
-      primary: healthState.currentPrimaryHost || '(not configured)',
-      replica: healthState.currentReplicaHost || '(not configured)',
+      primary: neonConfigured ? 'configured' : '(not configured)',
+      replica: healthState.currentReplicaHost ? 'configured' : '(not configured)',
     },
     database: {
       primary: healthState.primary,

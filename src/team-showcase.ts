@@ -198,11 +198,15 @@ export class TeamShowcaseManager {
         const firstName = nameParts[0] || '';
         const lastName = nameParts.slice(1).join(' ') || '';
 
-        // Trigger subtle animation
+        // Animate the text column, never the card: iOS Safari can drop a
+        // backdrop-filtered layer that is also animated.
         if (card) {
-            card.classList.remove('hero-fade-active');
-            void card.offsetWidth; // Force reflow
-            card.classList.add('hero-fade-active');
+            const infoSide = card.querySelector<HTMLElement>('.hero-info-side');
+            if (infoSide) {
+                infoSide.classList.remove('hero-fade-active');
+                void infoSide.offsetWidth; // Force reflow
+                infoSide.classList.add('hero-fade-active');
+            }
             card.style.setProperty('--card-accent', m.accentColor);
         }
 

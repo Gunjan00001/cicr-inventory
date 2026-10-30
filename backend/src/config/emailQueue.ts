@@ -8,6 +8,7 @@
 import { Queue, Worker } from 'bullmq';
 import Redis from 'ioredis';
 import nodemailer from 'nodemailer';
+import type { Transporter, SendMailOptions } from 'nodemailer';
 import { REDIS_URL, isRedisEnabled } from './redis';
 import { getSmtpUser, getSmtpPass } from '../services/emailService';
 
@@ -115,8 +116,8 @@ if (!isQueueDisabled && isRedisEnabled && REDIS_URL) {
   // module, so resolving SMTP credentials at module top-level would read a
   // partially-initialized circular import (getSmtpUser is not a function yet).
   // Deferring to job time also picks up late-arriving env configuration.
-  let workerTransporter: nodemailer.Transporter | null = null;
-  const getWorkerTransporter = (): nodemailer.Transporter => {
+  let workerTransporter: Transporter | null = null;
+  const getWorkerTransporter = (): Transporter => {
     if (!workerTransporter) {
       workerTransporter = nodemailer.createTransport({
         host: process.env.SMTP_HOST || 'smtp.gmail.com',
@@ -150,8 +151,8 @@ if (!isQueueDisabled && isRedisEnabled && REDIS_URL) {
         return;
       }
 
-      const finalOptions: nodemailer.SendMailOptions = {
-        ...(mailOptions as nodemailer.SendMailOptions)
+      const finalOptions: SendMailOptions = {
+        ...(mailOptions as SendMailOptions)
       };
 
       const info = await getWorkerTransporter().sendMail(finalOptions);

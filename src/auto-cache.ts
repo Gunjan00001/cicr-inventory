@@ -1,6 +1,7 @@
 /**
- * AutoCacheManager — one-shot startup cache sanitizer.
- * Clears stale cached collections while preserving auth keys. Runs once on load. */
+ * AutoCacheManager — startup cache sanitizer.
+ * Clears transient cache/temp keys while preserving auth keys, user state,
+ * the cart, and the one-time epoch marker. Runs on every load. */
 
 // ==========================================
 // Autonomous Silent Auto-Cache Sanitizer
@@ -48,12 +49,7 @@ export class AutoCacheManager {
                 for (let i = 0; i < localStorage.length; i++) {
                     const key = localStorage.key(i);
                     if (key && key.startsWith('cicr_') && !this.PRESERVED_AUTH_KEYS.has(key)) {
-                        if (
-                            key.includes('cache') ||
-                            key.includes('temp') ||
-                            key === 'cicr_dismissed_requests' ||
-                            key === 'cicr_fresh_epoch'
-                        ) {
+                        if (key.includes('cache') || key.includes('temp')) {
                             keysToRemove.push(key);
                         }
                     }

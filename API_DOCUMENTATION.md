@@ -1,4 +1,4 @@
-# API Documentation — CICR VAULT
+# API Documentation, CICR VAULT
 
 Base URL (local dev): `http://localhost:5000`
 All request/response bodies are JSON. All responses follow the shape:
@@ -30,12 +30,12 @@ No auth required.
 
 **Response `200`**
 ```json
-{ "status": "success", "message": "CICR Inventory API is live! 🚀" }
+{ "status": "success", "message": "CICR Inventory API is live! " }
 ```
 
 ---
 
-## Auth — `/api/auth`
+## Auth, `/api/auth`
 
 ### `POST /api/auth/register`
 No auth required.
@@ -100,14 +100,14 @@ No auth required.
 
 ---
 
-## Inventory — `/api/items`
+## Inventory, `/api/items`
 
 ### `GET /api/items`
 No auth required.
 
 **Query params** (optional)
-- `category` — exact match, e.g. `Controllers`
-- `search` — matches against `name` or `description` (case-insensitive, partial)
+* `category`, exact match, e.g. `Controllers`
+* `search`, matches against `name` or `description` (case-insensitive, partial)
 
 **Response `200`**
 ```json
@@ -181,7 +181,7 @@ Writes an `audit_logs` entry (`action: "Deleted"`) before removing the row.
 
 ---
 
-## Borrow / Return — `/api/borrow`
+## Borrow / Return, `/api/borrow`
 
 ### `POST /api/borrow`
 **Auth required.**
@@ -200,7 +200,7 @@ Validates `quantity <= inventory.available_quantity`, inserts a `borrow_records`
 row (`status: "BORROWED"`), decrements `inventory.available_quantity`, and
 writes an `audit_logs` entry (`action: "Borrowed"`).
 
-`duration_days` is capped to the **1–30 day** rental window — values outside it
+`duration_days` is capped to the **1–30 day** rental window, values outside it
 are rejected with `400`. `due_date` is computed as `borrowed_at + duration_days`.
 
 **Response `201`**: the created borrow record.
@@ -242,7 +242,7 @@ Step 1 of the **admin OTP approval** workflow. Generates a 6-digit OTP
   "quantity": "number (required, > 0)",
   "purpose": "string (optional)",
   "duration_days": "number (optional, default 5, must be 1–30)",
-  "selected_admin_id": "string (required — admin id from GET /api/borrow/admins)"
+  "selected_admin_id": "string (required, admin id from GET /api/borrow/admins)"
 }
 ```
 
@@ -364,7 +364,7 @@ joined with the borrowing user (`name`, `email`, `roll_number`) and the item
 
 ---
 
-## Dashboard — `/api`
+## Dashboard, `/api`
 
 ### `GET /api/stats`
 No auth required.
@@ -401,26 +401,26 @@ acting user (`name`, `email`) and referenced item (`name`).
 
 ## Route summary
 
-| Method | Path                     | Auth        |
+| Method | Path | Auth |
 | ------ | ------------------------- | ----------- |
-| GET    | `/api/health`              | None        |
-| POST   | `/api/auth/register`       | None        |
-| POST   | `/api/auth/login`          | None        |
-| GET    | `/api/auth/profile`        | Token       |
-| GET    | `/api/items`                | None        |
-| GET    | `/api/items/categories`     | None        |
-| GET    | `/api/items/:id`            | None        |
-| POST   | `/api/items`                | Admin       |
-| PATCH  | `/api/items/:id`            | Admin       |
-| DELETE | `/api/items/:id`            | Admin       |
-| POST   | `/api/borrow`               | Token       |
-| GET    | `/api/borrow/admins`        | Token       |
-| POST   | `/api/borrow/request-otp`   | Token       |
-| POST   | `/api/borrow/verify-otp`    | Token       |
-| POST   | `/api/borrow/return`        | Token       |
-| GET    | `/api/borrow/history`       | Token       |
-| GET    | `/api/stats`                | None        |
-| GET    | `/api/audit`                | Token       |
+| GET | `/api/health` | None |
+| POST | `/api/auth/register` | None |
+| POST | `/api/auth/login` | None |
+| GET | `/api/auth/profile` | Token |
+| GET | `/api/items` | None |
+| GET | `/api/items/categories` | None |
+| GET | `/api/items/:id` | None |
+| POST | `/api/items` | Admin |
+| PATCH | `/api/items/:id` | Admin |
+| DELETE | `/api/items/:id` | Admin |
+| POST | `/api/borrow` | Token |
+| GET | `/api/borrow/admins` | Token |
+| POST | `/api/borrow/request-otp` | Token |
+| POST | `/api/borrow/verify-otp` | Token |
+| POST | `/api/borrow/return` | Token |
+| GET | `/api/borrow/history` | Token |
+| GET | `/api/stats` | None |
+| GET | `/api/audit` | Token |
 
 Source: `backend/src/app.ts` and each module's `*.routes.ts` under
 `backend/src/modules/`.

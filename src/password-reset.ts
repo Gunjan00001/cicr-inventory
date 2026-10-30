@@ -4,7 +4,7 @@
  * Depends on: toast, database, core/api, utils/authCrypto. */
 
 import { readCurrentUser } from './core/session';
-import { createLegacyAuthToken, hashPasswordClient } from './utils/authCrypto';
+import { hashPasswordClient } from './utils/authCrypto';
 import { API_BASE } from './core/api';
 import { ToastManager } from './toast';
 import { DatabaseManager } from './database';
@@ -204,21 +204,15 @@ export class PasswordResetManager {
         }
 
         try {
-            // Pre-hash passwords client-side so plaintext is never transmitted in Network tab
-            const [hashedCurrentPassword, hashedNewPassword, legacyAuth] = await Promise.all([
-                hashPasswordClient(rawCurrent),
-                hashPasswordClient(rawNew),
-                createLegacyAuthToken(rawCurrent)
-            ]);
+            // Hash passwords client-side so plaintext is never transmitted in Network tab
+            const hashedCurrentPassword = await hashPasswordClient(rawCurrent);
+            const hashedNewPassword = await hashPasswordClient(rawNew);
 
             const payload: Record<string, any> = {
                 identifier,
                 current_password: hashedCurrentPassword,
                 new_password: hashedNewPassword
             };
-            if (legacyAuth) {
-                payload.legacy_auth = legacyAuth;
-            }
 
             const res = await fetch(`${API_BASE}/auth/reset-password`, {
                 method: 'POST',

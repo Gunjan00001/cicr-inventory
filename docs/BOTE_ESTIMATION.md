@@ -4,17 +4,17 @@
 
 **Current pipeline (as implemented):**
 
-- `backend/src/services/emailService.ts` — synchronous Nodemailer `transporter.sendMail()` over Gmail SMTP (`smtp.gmail.com:587`, STARTTLS).
-- `backend/src/modules/borrow/borrow.controller.ts` — admin-OTP approval workflow (`POST /api/borrow/request-otp` → `POST /api/borrow/verify-otp`), borrow/return confirmation emails fired **asynchronously** (`.catch()` fire-and-forget) so they never block the HTTP response.
-- `backend/src/services/reminderService.ts` — `node-cron` runs a due/overdue scan **daily at 09:00** + on server boot, sending **Day N-1 "due tomorrow" reminders** and due/overdue reminders **sequentially** (`await` per recipient).
+* `backend/src/services/emailService.ts`, synchronous Nodemailer `transporter.sendMail()` over Gmail SMTP (`smtp.gmail.com:587`, STARTTLS).
+* `backend/src/modules/borrow/borrow.controller.ts`, admin-OTP approval workflow (`POST /api/borrow/request-otp` → `POST /api/borrow/verify-otp`), borrow/return confirmation emails fired **asynchronously** (`.catch()` fire-and-forget) so they never block the HTTP response.
+* `backend/src/services/reminderService.ts`, `node-cron` runs a due/overdue scan **daily at 09:00** + on server boot, sending **Day N-1 "due tomorrow" reminders** and due/overdue reminders **sequentially** (`await` per recipient).
 
-> This analysis corresponds to project release **v1.4.7 (Pre-release — not production-ready)** (see the Version History and [Version Registry (Git Tags)](../README.md#-version-registry-git-tags) in `README.md`). All numbers assume the 3-email borrow workflow (admin OTP → borrow confirmation → return confirmation). Since **v1.4.7 (Institutional Email Support)** the sender is **`CICR Inventory Support <kushagragargdelhi@gmail.com>`** with `Reply-To: kushagragargdelhi@gmail.com`, and the live OTP probe targets the numeric institutional inbox **`992501030406@mail.jiit.ac.in`** (see the [Test OTP mail routing](../README.md#-test-accounts-seeded) note in `README.md`).
+> This analysis corresponds to project release **v1.4.7 (Pre-release, not production-ready)** (see the Version History and [Version Registry (Git Tags)](../README.md#-version-registry-git-tags) in `README.md`). All numbers assume the 3-email borrow workflow (admin OTP → borrow confirmation → return confirmation). Since **v1.4.7 (Institutional Email Support)** the sender is **`CICR Inventory Support <kushagragargdelhi@gmail.com>`** with `Reply-To: kushagragargdelhi@gmail.com`, and the live OTP probe targets the numeric institutional inbox **`992501030406@mail.jiit.ac.in`** (see the [Test OTP mail routing](../README.md#-test-accounts-seeded) note in `README.md`).
 
 ---
 
-## 0. BOTE formulas — as implemented (`boteService.ts`)
+## 0. BOTE formulas, as implemented (`boteService.ts`)
 
-The math below is not just napkin analysis — it ships as a live metrics engine in
+The math below is not just napkin analysis, it ships as a live metrics engine in
 `backend/src/services/boteService.ts`, exposed by two API endpoints (mounted at
 `/api/system` in `backend/src/server.ts`):
 
@@ -64,7 +64,7 @@ borrows/user/month → `emails_per_day = 1,333.3`, `gmail_accounts_needed = 3`,
 `exceeds_single_gmail_cap = true`, SES ≈ **$4/mo**, Resend ≈ **$8/mo**.
 
 > Note: the live engine counts **2** emails per borrow workflow (borrow confirmation
-> + return confirmation) — admin OTP emails and reminders ride on top of the same
+> + return confirmation), admin OTP emails and reminders ride on top of the same
 > 500/day pool. The prose sections below use **3** emails/workflow when reasoning
 > about the *full* OTP-approved workflow ceiling (~166/day).
 
@@ -124,7 +124,7 @@ For a club-scale deployment (hundreds of members, a few dozen borrows/day) Gmail
 
 ---
 
-## 2. Latency analysis — synchronous SMTP vs. BullMQ/Redis async job queue
+## 2. Latency analysis, synchronous SMTP vs. BullMQ/Redis async job queue
 
 ### Where latency currently exists
 
@@ -147,13 +147,13 @@ sequential_time = emails × 1 s
 parallel_time   = emails × 1 s / workers
 ```
 
-> The 10,000-user scenario comes from §3/§4 (≈1,333 transactional emails/day). At that scale the sequential reminder job alone would run for ~22 minutes — well beyond a "daily 09:00" job window. The busy-club-day row uses the Gmail cap of 166 workflows × 2 transactional emails (borrow + return) = 332 emails; OTP + Day N-1 emails ride on top of the same 500/day budget.
+> The 10,000-user scenario comes from §3/§4 (≈1,333 transactional emails/day). At that scale the sequential reminder job alone would run for ~22 minutes, well beyond a "daily 09:00" job window. The busy-club-day row uses the Gmail cap of 166 workflows × 2 transactional emails (borrow + return) = 332 emails; OTP + Day N-1 emails ride on top of the same 500/day budget.
 
 ### Why a queue (BullMQ + Redis) wins
 
 | Concern | Synchronous SMTP (current) | BullMQ / Redis queue |
 |---------|---------------------------|----------------------|
-| HTTP latency impact | None (fire-and-forget), but event-loop load | None — enqueue is O(1), `<1 ms` |
+| HTTP latency impact | None (fire-and-forget), but event-loop load | None, enqueue is O(1), `<1 ms` |
 | Send throughput | 1 email at a time (reminders), serial | N workers in parallel (`concurrency`) |
 | Failure handling | Logged and dropped, no retry | Automatic retries with exponential backoff |
 | Crash resilience | In-flight email lost on process restart | Job persists in Redis, re-run after restart |
@@ -169,7 +169,7 @@ cron (reminder scan) ────produce──────────┘
 
 ---
 
-## 3. Memory calculations — 10,000 active student users
+## 3. Memory calculations, 10,000 active student users
 
 A BullMQ job occupies roughly **~2 KB** in memory: job metadata (id, attempts, timestamps, ~0.5 KB) + JSON payload (`{ user_id, email, item_id, item_name, due_date, purpose }`, ~0.5–1.5 KB).
 
@@ -189,7 +189,7 @@ queue_memory = jobs × job_size
 | Redis-side mirror (lists + metadata) | ~10–15 MB |
 | Per-request latency impact | negligible (<1 ms enqueue) |
 
-**Context check — is 10,000 users realistic for the mail volume?**
+**Context check, is 10,000 users realistic for the mail volume?**
 
 ```
 10,000 students × 2 borrows / month × 3 emails per workflow (OTP + borrow + return)
@@ -197,8 +197,8 @@ queue_memory = jobs × job_size
     ≈ 1,333 emails / day
 ```
 
-- **Gmail cap:** 1,333/day vs. 500/day → **needs 3× Gmail accounts**, or a proper ESP (below).
-- **Queue memory:** 20 MB is trivially small for any Node process or Redis instance — the queue is **not** the bottleneck; the SMTP daily cap is.
+* **Gmail cap:** 1,333/day vs. 500/day → **needs 3× Gmail accounts**, or a proper ESP (below).
+* **Queue memory:** 20 MB is trivially small for any Node process or Redis instance, the queue is **not** the bottleneck; the SMTP daily cap is.
 
 ---
 
@@ -218,34 +218,34 @@ Email is the only external dependency on the borrow path, so delivery failure di
 Institutional gateways (`@mail.jiit.ac.in`, `.ac.in`, `.edu`) aggressively filter
 low-reputation, **HTML-only**, or header-light mail. The sender's MTA (Gmail)
 replies `250 OK`, the gateway silently sinks the message, and **no bounce ever
-arrives** — so a "successful" send tells you nothing about inbox landing.
+arrives**, so a "successful" send tells you nothing about inbox landing.
 
 **v1.4.4 patch** (`backend/src/services/emailService.ts`):
 
-- **Plain-text (`text/`) fallback on all five templates** — HTML-only mail scores as bulk;
-- **Custom Message-ID** (`<<unixms>.<hex>@…>`) — avoids the default
+* **Plain-text (`text/`) fallback on all five templates**, HTML-only mail scores as bulk;
+* **Custom Message-ID** (`<<unixms>.<hex>@…>`), avoids the default
   nodemailer format that some gateways fingerprint;
-- **X-header + priority set** — `X-CICR-Mailer: CICR-Inventory/v1.4.7`, `X-Mailer-Type`,
+* **X-header + priority set**, `X-CICR-Mailer: CICR-Inventory/v1.4.7`, `X-Mailer-Type`,
   `Importance`, `List-Unsubscribe`; OTP mail is `priority: 'high'`;
-- **Full SMTP response logging** — every send logs raw `response` (`250 2.0.0 OK …`)
+* **Full SMTP response logging**, every send logs raw `response` (`250 2.0.0 OK …`)
   plus the complete `envelope`, `accepted[]` / `rejected[]` and `messageId`.
 
-**v1.4.7 — Institutional Email Support (`@mail.jiit.ac.in`):**
+**v1.4.7, Institutional Email Support (`@mail.jiit.ac.in`):**
 
-- **RFC 2822 dynamic Message-ID** — `generateMessageId()` derives `id-right` from `SMTP_HOST`
+* **RFC 2822 dynamic Message-ID**, `generateMessageId()` derives `id-right` from `SMTP_HOST`
   (`smtp.gmail.com → gmail.com`), `id-left` = unix-ms + 128-bit hex, aligning the id domain
   with the authenticated sending domain;
-- **Explicit sender + Reply-To** — `CICR Inventory Support <kushagragargdelhi@gmail.com>`
+* **Explicit sender + Reply-To**, `CICR Inventory Support <kushagragargdelhi@gmail.com>`
   with `Reply-To: kushagragargdelhi@gmail.com`;
-- **High-priority headers** — `X-Priority: 1 (Highest)` + `Importance: High` on OTP mail;
-- **Numeric student-ID validation** — `backend/src/validators/email.validator.ts` accepts
+* **High-priority headers**, `X-Priority: 1 (Highest)` + `Importance: High` on OTP mail;
+* **Numeric student-ID validation**, `backend/src/validators/email.validator.ts` accepts
   12-digit numeric institutional IDs `^[0-9]{12}@mail\.jiit\.ac\.in$` (any `jiit.ac.in`
   subdomain) without validation errors;
-- **Institutional probe** — `node test/test-email.cjs` dispatches the live OTP to
+* **Institutional probe**, `node test/test-email.cjs` dispatches the live OTP to
   `992501030406@mail.jiit.ac.in` and logs full SMTP response codes + sent headers.
 
 **Detection rule:** `accepted=["…@mail.jiit.ac.in"]` + `rejected=[]` + empty inbox ⇒
-**sinkholed upstream** — the fix is SPF/DKIM alignment or moving to an ESP
+**sinkholed upstream**, the fix is SPF/DKIM alignment or moving to an ESP
 (Resend/SES), not more SMTP retries.
 
 **Back-of-envelope OTP workflow reliability**
@@ -256,11 +256,11 @@ otp_success = send_success × (1 − sinkhole_rate)
             ≈ 0.93 (≈ 93% end-to-end OTP delivery on institutional domains)
 ```
 
-> **Delivery math:** with a 2–5% sinkhole/spam rate on institutional domains (missing custom SPF/DKIM headers), roughly **3–5% of OTP emails never reach the admin inbox** on a first send. Borrowing workflows are not lost — the OTP remains valid for 10 minutes and a re-request is idempotent — but a production inbox needs SPF/DKIM configured (or an ESP like Resend/SES) before relying on OTP approval at scale.
+> **Delivery math:** with a 2–5% sinkhole/spam rate on institutional domains (missing custom SPF/DKIM headers), roughly **3–5% of OTP emails never reach the admin inbox** on a first send. Borrowing workflows are not lost, the OTP remains valid for 10 minutes and a re-request is idempotent, but a production inbox needs SPF/DKIM configured (or an ESP like Resend/SES) before relying on OTP approval at scale.
 
-### Concurrency limits — 500–1000 concurrent users
+### Concurrency limits, 500–1000 concurrent users
 
-The web tier (Express + Supabase PostgREST) is **not** the bottleneck — it comfortably serves **500–1000 concurrent users** with <1s API response latency (stateless JSON routes, serverless-friendly, connection-pooled Postgres).
+The web tier (Express + Supabase PostgREST) is **not** the bottleneck, it comfortably serves **500–1000 concurrent users** with <1s API response latency (stateless JSON routes, serverless-friendly, connection-pooled Postgres).
 
 | Constraint | Limit | Notes |
 |------------|:---:|-------|
@@ -291,7 +291,7 @@ Run as part of `node test/system-health-check.cjs` (see the [System Audit & Heal
 
 The `250 2.0.0 OK … - gsmtp` tail is the raw SMTP dialogue the app's
 `logDelivery()` helper echoes on every transactional send. Per the sinkhole
-analysis above, `250 OK` + `rejected=[]` confirms **SMTP acceptance** — for an
+analysis above, `250 OK` + `rejected=[]` confirms **SMTP acceptance**, for an
 institutional `.ac.in` recipient, an empty inbox with the same response would
 mean upstream sinkholing (fix: SPF/DKIM or an ESP). The v1.4.7 Message-ID now
 aligns with the authenticated sending domain (`@gmail.com`), the mail carries
@@ -301,7 +301,7 @@ here means the OTP lands in the numeric institutional inbox.
 
 ---
 
-## 4. Capacity comparison — Gmail vs. Resend vs. AWS SES
+## 4. Capacity comparison, Gmail vs. Resend vs. AWS SES
 
 Pricing is approximate (back-of-envelope) for 2026 public tiers; verify on provider sites before committing.
 
@@ -323,14 +323,14 @@ AWS SES: 40,000 × $0.10 / 1,000 = $4.00 / month
 
 | Scenario | Emails/month | Gmail | Resend | AWS SES |
 |----------|-------------:|:---:|:---:|:---:|
-| Club today (~4,980 workflows) | ~14,940 | ⚠️ 500/day cap OK (≈166 workflows/day) | $2.99 | $1.49 |
-| 10,000 students | ~40,000 | ❌ cap exceeded 3× | $8.00 | $4.00 |
+| Club today (~4,980 workflows) | ~14,940 | 500/day cap OK (≈166 workflows/day) | $2.99 | $1.49 |
+| 10,000 students | ~40,000 | cap exceeded 3× | $8.00 | $4.00 |
 
 ### Decision matrix
 
-- **Stay on Gmail** while `full_workflows/day ≤ 166` and reminder bursts are scheduled off-peak (e.g. run the cron after 18:00 so the 09:00 reminder batch doesn't compete with the transaction cap).
-- **Move to Resend** for a drop-in API replacement, generous webhooks/analytics, and instant parallelism without operating Redis.
-- **Move to AWS SES** for lowest cost at sustained high volume; adds sender reputation management (warm-up, DKIM/SPF) and a slightly heavier SDK/API.
+* **Stay on Gmail** while `full_workflows/day ≤ 166` and reminder bursts are scheduled off-peak (e.g. run the cron after 18:00 so the 09:00 reminder batch doesn't compete with the transaction cap).
+* **Move to Resend** for a drop-in API replacement, generous webhooks/analytics, and instant parallelism without operating Redis.
+* **Move to AWS SES** for lowest cost at sustained high volume; adds sender reputation management (warm-up, DKIM/SPF) and a slightly heavier SDK/API.
 
 ---
 
@@ -340,7 +340,7 @@ The system has two hard external dependencies: **Gmail SMTP** (email pipeline) a
 **Supabase** (database + auth). Both ship free-tier ceilings that bite well before
 the API tier does. This section is the "when do we need to pay?" answer for each.
 
-### 5.1 Gmail SMTP — burst limit & connection throttle
+### 5.1 Gmail SMTP, burst limit & connection throttle
 
 The daily 500-emails cap (§1) is only one side of the constraint. Gmail also
 throttles **bursts**:
@@ -363,7 +363,7 @@ throttles **bursts**:
 In practice a **250–300 req/min** burst (e.g. a club-wide reminder kick or a
 stress test) exceeds the sustainable Gmail throughput by **~10×**, so the
 pipeline must either (a) queue + rate-limit to ~25/min, or (b) move to an ESP
-with a real per-minute budget. This is a **threshold, not a hard failure** —
+with a real per-minute budget. This is a **threshold, not a hard failure**,
 Gmail returns `421` retryable errors rather than hard bounces, so a
 BullMQ/Redis queue with retries absorbs the burst; the API stays responsive.
 
@@ -371,7 +371,7 @@ BullMQ/Redis queue with retries absorbs the burst; the API stays responsive.
 > 100 in a single minute → switch `emailService.ts` to **Resend** or **AWS SES**
 (both handle thousands/min on paid tiers).
 
-### 5.2 Supabase Free Tier — database, storage & auth ceilings
+### 5.2 Supabase Free Tier, database, storage & auth ceilings
 
 | Resource | Free tier cap | Pro tier ($25/mo) |
 |----------|:---:|:---:|
@@ -402,7 +402,7 @@ connection pooler (port `6543`) for serverless/many-instance deploys.
 > **The math to remember:** Gmail caps you at ~**166 full borrow workflows/day**
 > and ~**20–30 emails/min**; Supabase caps you at **60 connections / 500 MB**.
 > A paid tier is required at ~10,000 students (≈1,333 emails/day) or once the DB
-> passes 500 MB — whichever comes first.
+> passes 500 MB, whichever comes first.
 
 ---
 
@@ -412,18 +412,18 @@ connection pooler (port `6543`) for serverless/many-instance deploys.
 |----------|--------|
 | How many full borrow workflows/day can Gmail sustain? | **~166** (500 emails ÷ 3 emails/workflow) |
 | What is the web-tier concurrency limit? | **500–1000 concurrent users**, <1s API latency |
-| What is the OTP delivery failure rate? | **2–5%** on institutional domains (missing SPF/DKIM) — ≈93% end-to-end first-send OTP success |
-| Gmail burst / connection limits? | **~20–30 emails/min**, **~10–15 concurrent SMTP connections** — `421` throttling beyond that |
+| What is the OTP delivery failure rate? | **2–5%** on institutional domains (missing SPF/DKIM), ≈93% end-to-end first-send OTP success |
+| Gmail burst / connection limits? | **~20–30 emails/min**, **~10–15 concurrent SMTP connections**, `421` throttling beyond that |
 | Supabase Free Tier caps? | **60 direct DB connections**, **500 MB DB**, **50k MAU** |
 | When do we need Resend/SES? | Send rate > ~25/min sustained or >100-email burst/min → ~**$20/mo** (Resend) / ~$4–5/mo (SES) |
 | When do we need Supabase Pro? | DB > 500 MB or > 60 pooled connections → **$25/mo** |
-| What happens at 10,000 students? | ~1,333 emails/day — **3× over Gmail's cap** |
-| Reminder job latency at scale (sequential)? | 10,000 × ~1 s = **~2.8 h** — use a queue + workers |
-| Memory for a 10,000-job queue? | **~20 MB** — non-issue for the process/Redis |
+| What happens at 10,000 students? | ~1,333 emails/day, **3× over Gmail's cap** |
+| Reminder job latency at scale (sequential)? | 10,000 × ~1 s = **~2.8 h**, use a queue + workers |
+| Memory for a 10,000-job queue? | **~20 MB**, non-issue for the process/Redis |
 | Cheapest production ESP at 40k emails/month? | **AWS SES ≈ $4/month** (Resend ≈ $8/month) |
 
 **Next-step recommendation:** keep Gmail for current club scale (≤166 workflows/day); when cross-user volume approaches that ceiling, introduce a BullMQ/Redis worker pool for reminders (or switch `emailService.ts` to the Resend/SES SDK) before the daily cap becomes the bottleneck.
 
 ---
 
-*Numbers are estimates for planning only — measure with real SMTP timing and queue metrics before making infrastructure decisions.*
+*Numbers are estimates for planning only, measure with real SMTP timing and queue metrics before making infrastructure decisions.*

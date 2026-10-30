@@ -1,4 +1,4 @@
-# CICR VAULT — System & Issue Tracking Logs
+# CICR VAULT, System & Issue Tracking Logs
 
 This document serves as the centralized master log for **CICR VAULT (cicr-inventory)**, cataloging all active GitHub tracking issues, public endpoint security assessments, frontend state & lifecycle audits, authentication UX & form validation matrices, and data schema parity status.
 
@@ -47,20 +47,20 @@ An audit of all unauthenticated and authorization-sensitive endpoints currently 
 
 | Endpoint | Method | Exposure / Threat Level | Observed Mechanics & Vulnerability Description | Required Defensive Remediation |
 | :--- | :---: | :---: | :--- | :--- |
-| `/api/borrow` | `POST` | 🔴 **CRITICAL** | Lacks `requireAdmin` check. Any authenticated user with role `MEMBER` can call `POST /api/borrow` directly to instantly decrement stock and checkout hardware without admin approval, bypassing the request approval queue. | **Issue #49**: Restrict `POST /api/borrow` to `requireAdmin` or redirect members to `/api/borrow/request`. |
-| `/api/smtp-debug` | `GET` | 🔴 **HIGH** | Accessible without auth. Performs external TCP socket connections to `smtp.gmail.com:587` and `:465`, executes DNS lookups, and exposes server boolean flags (`smtp_user_set`, `smtp_pass_set`). | **Issue #39**: Remove or gate behind `authenticateToken` + `requireAdmin`. Disable in production mode. |
-| `/api/auth/reset-password` | `POST` | 🔴 **CRITICAL** | Recovery flow requires `current_password` (which a locked-out user does not know). Returns verbose 404 `"No registered user found with that email, enrollment number, or name"`, enabling student account enumeration. | **Issue #40**: Re-establish email-dispatched signed OTP/tokens; return generic confirmation messages to prevent account enumeration. |
-| `/api/auth/forgot-password` | `POST` | 🟡 **MEDIUM** | Returns static text stating `"OTP verification has been completely decommissioned. You can reset your password directly on the website without any OTP."`, revealing decommissioned authentication state. | **Issue #40**: Unify with secure tokenized recovery flow; remove misleading messages. |
-| `/api/borrow/admins` | `GET` | 🟠 **HIGH** | Unauthenticated endpoint returning the full institutional administrator roster (`id`, `name`, official institutional email addresses) from `ADMIN_DIRECTORY`. Exposes privileged users to spear-phishing. | **Issue #41**: Add `authenticateToken` middleware so only authenticated students/members can access administrative contacts. |
-| `/api/system/simulate-scale` | `GET` | 🟡 **MEDIUM** | Accepts arbitrary numerical query inputs (`users`, `borrowsPerUserPerMonth`, `jobsPerUser`) and triggers CPU-bound mathematical modeling without authentication or rate limits. | **Issue #42**: Restrict to `requireAdmin` or apply strict rate limiting and clamp numerical inputs. |
-| `/api/system/bote-metrics` | `GET` | 🟡 **LOW/MED** | Exposes live operational metrics: `emailsUsedToday`, active borrow numbers, items due today, and total user count without authentication. | **Issue #42**: Restrict to authenticated users or sanitize internal email quota telemetry. |
-| `/api/items` | `GET` | 🟢 **LOW** | Hardware inventory catalog search and listing. Cached 30s in Redis. Safe for public browsing, but query parameters (`search`, `category`) should be clamped to avoid regex DoS. | Maintain read-pool query caching and sanitize regex/ilike inputs. |
-| `/api/items/:id` | `GET` | 🟢 **LOW** | Single item hardware details. Cached 30s. Safe for public viewing. | Standard UUID input validation. |
-| `/api/items/categories` | `GET` | 🟢 **LOW** | List of unique hardware categories. Safe for public viewing. | Keep public. |
-| `/api/stats` | `GET` | 🟢 **LOW** | Aggregate dashboard counters (total items, available quantity). Cached 15s. Safe for landing page counters. | Keep public, maintain 15s Redis cache. |
-| `/api/health` | `GET` | 🟢 **INFO** | HA database connection health payload (`healthy`, `degraded`, `failing`). | Ensure error traces and database credentials are never leaked in error blocks. |
-| `/api/auth/register` | `POST` | 🟢 **CONTROLLED** | Student registration. Protected by `registerLimiter` and email validator (`@mail.jiit.ac.in` domain check). | Maintain rate limits and institutional email validation. |
-| `/api/auth/login` | `POST` | 🟢 **CONTROLLED** | User authentication. Protected by `authLimiter` and bcrypt password verification. | Maintain rate limits and session logging. |
+| `/api/borrow` | `POST` | **CRITICAL** | Lacks `requireAdmin` check. Any authenticated user with role `MEMBER` can call `POST /api/borrow` directly to instantly decrement stock and checkout hardware without admin approval, bypassing the request approval queue. | **Issue #49**: Restrict `POST /api/borrow` to `requireAdmin` or redirect members to `/api/borrow/request`. |
+| `/api/smtp-debug` | `GET` | **HIGH** | Accessible without auth. Performs external TCP socket connections to `smtp.gmail.com:587` and `:465`, executes DNS lookups, and exposes server boolean flags (`smtp_user_set`, `smtp_pass_set`). | **Issue #39**: Remove or gate behind `authenticateToken` + `requireAdmin`. Disable in production mode. |
+| `/api/auth/reset-password` | `POST` | **CRITICAL** | Recovery flow requires `current_password` (which a locked-out user does not know). Returns verbose 404 `"No registered user found with that email, enrollment number, or name"`, enabling student account enumeration. | **Issue #40**: Re-establish email-dispatched signed OTP/tokens; return generic confirmation messages to prevent account enumeration. |
+| `/api/auth/forgot-password` | `POST` | **MEDIUM** | Returns static text stating `"OTP verification has been completely decommissioned. You can reset your password directly on the website without any OTP."`, revealing decommissioned authentication state. | **Issue #40**: Unify with secure tokenized recovery flow; remove misleading messages. |
+| `/api/borrow/admins` | `GET` | **HIGH** | Unauthenticated endpoint returning the full institutional administrator roster (`id`, `name`, official institutional email addresses) from `ADMIN_DIRECTORY`. Exposes privileged users to spear-phishing. | **Issue #41**: Add `authenticateToken` middleware so only authenticated students/members can access administrative contacts. |
+| `/api/system/simulate-scale` | `GET` | **MEDIUM** | Accepts arbitrary numerical query inputs (`users`, `borrowsPerUserPerMonth`, `jobsPerUser`) and triggers CPU-bound mathematical modeling without authentication or rate limits. | **Issue #42**: Restrict to `requireAdmin` or apply strict rate limiting and clamp numerical inputs. |
+| `/api/system/bote-metrics` | `GET` | **LOW/MED** | Exposes live operational metrics: `emailsUsedToday`, active borrow numbers, items due today, and total user count without authentication. | **Issue #42**: Restrict to authenticated users or sanitize internal email quota telemetry. |
+| `/api/items` | `GET` | **LOW** | Hardware inventory catalog search and listing. Cached 30s in Redis. Safe for public browsing, but query parameters (`search`, `category`) should be clamped to avoid regex DoS. | Maintain read-pool query caching and sanitize regex/ilike inputs. |
+| `/api/items/:id` | `GET` | **LOW** | Single item hardware details. Cached 30s. Safe for public viewing. | Standard UUID input validation. |
+| `/api/items/categories` | `GET` | **LOW** | List of unique hardware categories. Safe for public viewing. | Keep public. |
+| `/api/stats` | `GET` | **LOW** | Aggregate dashboard counters (total items, available quantity). Cached 15s. Safe for landing page counters. | Keep public, maintain 15s Redis cache. |
+| `/api/health` | `GET` | **INFO** | HA database connection health payload (`healthy`, `degraded`, `failing`). | Ensure error traces and database credentials are never leaked in error blocks. |
+| `/api/auth/register` | `POST` | **CONTROLLED** | Student registration. Protected by `registerLimiter` and email validator (`@mail.jiit.ac.in` domain check). | Maintain rate limits and institutional email validation. |
+| `/api/auth/login` | `POST` | **CONTROLLED** | User authentication. Protected by `authLimiter` and bcrypt password verification. | Maintain rate limits and session logging. |
 
 ---
 
@@ -70,12 +70,12 @@ Audit of client-side application logic, storage lifecycle, and user interface de
 
 | Area | Threat / Defect | Description | Remediation |
 | :--- | :--- | :--- | :--- |
-| **Request Failure Handling** | 🔴 **High** | `main.ts:4179-4189` caches failed borrow requests locally and displays `"Request Transmitted"` when network fails, creating phantom unacknowledged requests. | **Issue #43**: Require server acknowledgement before confirming request submission. |
-| **Logout State Cleansing** | 🟠 **High** | `handleLogout()` fails to remove `cicr_cart_items`, `cicr_requests`, and `cicr_pending_returns`, leaking previous borrower data on shared laboratory computers. | **Issue #44**: Explicitly reset and purge cart and request storage upon user logout. |
-| **Initial Theme Hydration** | 🟡 **Medium** | `index.html` hardcodes `data-theme="mono"`, triggering a Flash of Unstyled Theme (FOUC) when reloading in Robo Lab light mode. | **Issue #45**: Inject early synchronous theme resolver script in document `<head>`. |
-| **Accessibility (A11y)** | 🟡 **Medium** | Modals lack `role="dialog"`, `aria-modal="true"`, and Tab focus trapping, permitting keyboard focus escape into background layers. | **Issue #46**: Add standard ARIA dialog attributes and keyboard focus trap manager. |
-| **Animation Loop & Battery** | 🟡 **Medium** | Three.js particle system recalculates vertex positions in a CPU loop every frame (`needsUpdate = true`) and ignores `prefers-reduced-motion`. | **Issue #47**: Gate animation behind reduced-motion queries; optimize particle updates via GPU shader. |
-| **Multi-Tab Sync** | 🟡 **Medium** | Frontend lacks a `window.addEventListener('storage', ...)` listener, leading to stale auth tokens and mismatched cart badges across open tabs. | **Issue #48**: Implement cross-tab storage synchronizer to update UI when storage mutates. |
+| **Request Failure Handling** | **High** | `main.ts:4179-4189` caches failed borrow requests locally and displays `"Request Transmitted"` when network fails, creating phantom unacknowledged requests. | **Issue #43**: Require server acknowledgement before confirming request submission. |
+| **Logout State Cleansing** | **High** | `handleLogout()` fails to remove `cicr_cart_items`, `cicr_requests`, and `cicr_pending_returns`, leaking previous borrower data on shared laboratory computers. | **Issue #44**: Explicitly reset and purge cart and request storage upon user logout. |
+| **Initial Theme Hydration** | **Medium** | `index.html` hardcodes `data-theme="mono"`, triggering a Flash of Unstyled Theme (FOUC) when reloading in Robo Lab light mode. | **Issue #45**: Inject early synchronous theme resolver script in document `<head>`. |
+| **Accessibility (A11y)** | **Medium** | Modals lack `role="dialog"`, `aria-modal="true"`, and Tab focus trapping, permitting keyboard focus escape into background layers. | **Issue #46**: Add standard ARIA dialog attributes and keyboard focus trap manager. |
+| **Animation Loop & Battery** | **Medium** | Three.js particle system recalculates vertex positions in a CPU loop every frame (`needsUpdate = true`) and ignores `prefers-reduced-motion`. | **Issue #47**: Gate animation behind reduced-motion queries; optimize particle updates via GPU shader. |
+| **Multi-Tab Sync** | **Medium** | Frontend lacks a `window.addEventListener('storage', ...)` listener, leading to stale auth tokens and mismatched cart badges across open tabs. | **Issue #48**: Implement cross-tab storage synchronizer to update UI when storage mutates. |
 
 ---
 
@@ -85,12 +85,12 @@ Audit of the authentication modals, credential inputs, and form submission flows
 
 | Area | Threat / Defect | Description | Remediation |
 | :--- | :--- | :--- | :--- |
-| **Signup Password Typo Lockout** | 🟠 **High** | Registration form only provides one password input (`#signup-password`) with no confirmation input, risking permanent account lockout from accidental typos. | **Issue #50**: Add `#signup-confirm-password` and client-side password match validation. |
-| **Double-Submission & Race Conditions** | 🟠 **High** | Neither `#btn-submit-login` nor `#btn-submit-signup` disables during `await fetch()`, causing duplicate registration attempts and 429 rate-limiting during cold starts. | **Issue #51**: Add button disabled loading states with animated spinners. |
-| **Hardcoded Admin Email Bypass** | 🟠 **High** | `isAllowedEmail()` hardcodes only two specific admin emails, blocking newly promoted administrators with non-JIIT emails from logging in on the client side. | **Issue #52**: Allow all non-JIIT logins to pass through to backend authentication. |
-| **Branch vs. Batch Label Contradiction** | 🟡 **Medium** | HTML label says `"Academic Branch (CSE/ECE/IT)"` while validator says `"Please enter your lab section batch (F1/F2)"`, confusing students during sign-up. | **Issue #53**: Standardize label and error message to Academic Branch. |
-| **Avatar Residual Cache on Switch** | 🟡 **Low/Med** | Logging into an account without an avatar after an account with an avatar retains the previous user's avatar image because `.src` is not wiped. | **Issue #54**: Explicitly reset `sidebarAvatarImg.src = ''` when `avatar_url` is null. |
-| **Plain-Text Passwords in DOM** | 🟡 **Medium** | Form inputs do not wipe `.value` on completion; raw passwords remain in memory for DOM inspection during dashboard navigation. | **Issue #55**: Reset `loginPassInp.value = ''` and `signupPassInp.value = ''` after transmission. |
+| **Signup Password Typo Lockout** | **High** | Registration form only provides one password input (`#signup-password`) with no confirmation input, risking permanent account lockout from accidental typos. | **Issue #50**: Add `#signup-confirm-password` and client-side password match validation. |
+| **Double-Submission & Race Conditions** | **High** | Neither `#btn-submit-login` nor `#btn-submit-signup` disables during `await fetch()`, causing duplicate registration attempts and 429 rate-limiting during cold starts. | **Issue #51**: Add button disabled loading states with animated spinners. |
+| **Hardcoded Admin Email Bypass** | **High** | `isAllowedEmail()` hardcodes only two specific admin emails, blocking newly promoted administrators with non-JIIT emails from logging in on the client side. | **Issue #52**: Allow all non-JIIT logins to pass through to backend authentication. |
+| **Branch vs. Batch Label Contradiction** | **Medium** | HTML label says `"Academic Branch (CSE/ECE/IT)"` while validator says `"Please enter your lab section batch (F1/F2)"`, confusing students during sign-up. | **Issue #53**: Standardize label and error message to Academic Branch. |
+| **Avatar Residual Cache on Switch** | **Low/Med** | Logging into an account without an avatar after an account with an avatar retains the previous user's avatar image because `.src` is not wiped. | **Issue #54**: Explicitly reset `sidebarAvatarImg.src = ''` when `avatar_url` is null. |
+| **Plain-Text Passwords in DOM** | **Medium** | Form inputs do not wipe `.value` on completion; raw passwords remain in memory for DOM inspection during dashboard navigation. | **Issue #55**: Reset `loginPassInp.value = ''` and `signupPassInp.value = ''` after transmission. |
 
 ---
 
@@ -217,16 +217,16 @@ classDiagram
 CICR VAULT implements a 7-day retention audit trail backed by the PostgreSQL `audit_logs` table.
 
 ### 7.1 Action Event Taxonomy
-- `AUTH_LOGIN` / `AUTH_REGISTER` / `AUTH_LOGOUT`: Student & admin authentication events.
-- `BORROW_REQUEST_SUBMITTED`: Logged when an issue request is dispatched from the hardware cart.
-- `BORROW_APPROVED` / `BORROW_REJECTED`: Admin authorization decisions with reviewer identification.
-- `RETURN_REQUEST_SUBMITTED`: Borrower return intent with specific return quantities.
-- `RETURN_APPROVED`: Admin hardware verification and inventory restock.
-- `ITEM_CREATED` / `ITEM_UPDATED` / `ITEM_DELETED`: Catalog mutation tracking with creator attribution.
-- `USER_ROLE_CHANGED` / `USER_APPROVED` / `USER_DELETED`: Administrative roster management.
+* `AUTH_LOGIN` / `AUTH_REGISTER` / `AUTH_LOGOUT`: Student & admin authentication events.
+* `BORROW_REQUEST_SUBMITTED`: Logged when an issue request is dispatched from the hardware cart.
+* `BORROW_APPROVED` / `BORROW_REJECTED`: Admin authorization decisions with reviewer identification.
+* `RETURN_REQUEST_SUBMITTED`: Borrower return intent with specific return quantities.
+* `RETURN_APPROVED`: Admin hardware verification and inventory restock.
+* `ITEM_CREATED` / `ITEM_UPDATED` / `ITEM_DELETED`: Catalog mutation tracking with creator attribution.
+* `USER_ROLE_CHANGED` / `USER_APPROVED` / `USER_DELETED`: Administrative roster management.
 
 ### 7.2 Automated Pruning & Cleanup
-- Audit records older than the active retention window (default 7 days) are periodically swept via `POST /api/audit/cleanup` or database retention index scans (`idx_audit_logs_timestamp`), ensuring low table bloat and high query performance.
+* Audit records older than the active retention window (default 7 days) are periodically swept via `POST /api/audit/cleanup` or database retention index scans (`idx_audit_logs_timestamp`), ensuring low table bloat and high query performance.
 
 ---
 

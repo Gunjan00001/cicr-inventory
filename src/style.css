@@ -12495,12 +12495,10 @@ body.theme-light .mobile-sidebar-backdrop {
 
 @keyframes heroFadeSlide {
     0% {
-        opacity: 0;
         transform: translateY(10px);
     }
 
     100% {
-        opacity: 1;
         transform: translateY(0);
     }
 }
@@ -12523,6 +12521,17 @@ body.theme-light .mobile-sidebar-backdrop {
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 240, 255, 0.08);
+}
+
+/* iOS Safari drops a composited layer when the SAME element has backdrop-filter
+   and is animated or scrolled (WebKit bug 219729), which made the hero card and
+   carousel go blank. Backgrounds are ~90% opaque, so the blur is negligible.
+   The hero fade now runs on .hero-info-side and animates transform only, so a
+   failed animation can never leave the card content transparent. */
+.team-hero-card,
+.team-selector-carousel-container {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
 }
 
 .team-carousel-arrow {

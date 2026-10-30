@@ -1,13 +1,8 @@
 /**
  * Client-Side Authentication Cryptography Utility
  *
- * Implements client-side SHA-256 password pre-hashing and secure migration tokens.
- * This guarantees that plaintext passwords are NEVER transmitted over the network
- * or visible in browser DevTools Network tabs.
+ * Implements client-side SHA-256 password pre-hashing.
  */
-
-const LEGACY_MIGRATION_SECRET = 'CICR_VAULT_LEGACY_AUTH_MIGRATION_KEY_2026';
-const LEGACY_MIGRATION_SALT = 'CICR_VAULT_SALT';
 
 /**
  * Pure JavaScript SHA-256 implementation for maximum cross-browser/cross-origin resilience.
@@ -112,55 +107,4 @@ export async function hashPasswordClient(password: string): Promise<string> {
     }
 
     return sha256Fallback(password);
-}
-
-/**
- * Creates an encrypted migration token (AES-GCM) containing the raw password.
- * This allows the backend to verify and automatically upgrade legacy user accounts
- * that were created before client-side hashing was enabled, WITHOUT exposing the raw password
- * in the network payload.
- */
-export async function createLegacyAuthToken(rawPassword: string): Promise<string | undefined> {
-    if (!rawPassword) return undefined;
-    try {
-        if (typeof window !== 'undefined' && window.crypto && window.crypto.subtle) {
-            const encoder = new TextEncoder();
-            const data = encoder.encode(rawPassword);
-
-            const keyMaterial = await window.crypto.subtle.importKey(
-                'raw',
-                encoder.encode(LEGACY_MIGRATION_SECRET),
-                { name: 'PBKDF2' },
-                false,
-                ['deriveKey']
-            );
-
-            const key = await window.crypto.subtle.deriveKey(
-                {
-                    name: 'PBKDF2',
-                    salt: encoder.encode(LEGACY_MIGRATION_SALT),
-                    iterations: 1000,
-                    hash: 'SHA-256'
-                },
-                keyMaterial,
-                { name: 'AES-GCM', length: 256 },
-                false,
-                ['encrypt']
-            );
-
-            const iv = window.crypto.getRandomValues(new Uint8Array(12));
-            const encrypted = await window.crypto.subtle.encrypt(
-                { name: 'AES-GCM', iv },
-                key,
-                data
-            );
-
-            const ivHex = Array.from(iv).map(b => b.toString(16).padStart(2, '0')).join('');
-            const cipherHex = Array.from(new Uint8Array(encrypted)).map(b => b.toString(16).padStart(2, '0')).join('');
-            return `${ivHex}:${cipherHex}`;
-        }
-    } catch {
-        // In the rare event WebCrypto encryption is unavailable, return undefined
-    }
-    return undefined;
 }

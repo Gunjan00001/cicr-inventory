@@ -96,9 +96,7 @@
                     if (storageKey && storageKey.indexOf('cicr_') === 0 && !PRESERVED_KEYS[storageKey]) {
                         if (
                             storageKey.indexOf('cache') !== -1 ||
-                            storageKey.indexOf('temp') !== -1 ||
-                            storageKey === 'cicr_fresh_epoch' ||
-                            storageKey === 'cicr_dismissed_requests'
+                            storageKey.indexOf('temp') !== -1
                         ) {
                             keysToRemove.push(storageKey);
                         }

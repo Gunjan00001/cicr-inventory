@@ -4,109 +4,141 @@
 
 # CICR Inventory Hub
 
-**Creative & Innovative Cell in Robotics — Inventory & Hardware Allocation System**
+**Creative & Innovative Cell in Robotics, Inventory & Hardware Allocation System**
 
 Track, reserve, and deploy microcontrollers, sensors, and actuators from JIIT's robotics vault with a modern full-stack web platform: **React-free Vite + Three.js & Canvas VFX engines**, **Node.js/Express REST API**, **Supabase (PostgreSQL)** persistence, **Redis** session caching & queues, and **Nodemailer** transactional telemetry.
 
 [![Live Demo](https://img.shields.io/badge/LIVE-cicrinventory.vercel.app-00f0ff?style=for-the-badge&logo=vercel&logoColor=white)](https://cicrinventory.vercel.app/)
 [![Repo](https://img.shields.io/badge/GITHUB-CICR__Inventory-bd00ff?style=for-the-badge&logo=github&logoColor=white)](https://github.com/simplyvardaan/CICR_Inventory)
 [![Backend](https://img.shields.io/badge/API-Render%20Web%20Service-46e3b7?style=for-the-badge&logo=render&logoColor=white)](https://cicr-inventory-backend.onrender.com)
-[![License](https://img.shields.io/badge/LICENSE-MIT-1e2327?style=for-the-badge)](#-license)
+[![License](https://img.shields.io/badge/LICENSE-MIT-1e2327?style=for-the-badge)](#license)
 
 </div>
 
 ---
 
-## 📑 Table of Contents
+## Table of Contents
 
-- [Version History](#-version-history)
-- [System Architecture](#-system-architecture)
-- [Tech Stack](#-tech-stack)
-- [Repository Structure](#-repository-structure)
-- [Getting Started](#-getting-started)
-- [Environment Variables](#-environment-variables)
-- [Dual Superadmin & Institutional Auth Guard](#-dual-superadmin--institutional-auth-guard)
-- [Admin Portal & Multi-Tier Hardware Queue](#-admin-portal--multi-tier-hardware-queue)
-- [Frontend Themes & Interactive Canvas Engines](#-frontend-themes--interactive-canvas-engines)
-- [API Reference](#-api-reference)
-- [Email Telemetry & Notification Workflow](#-email-telemetry--notification-workflow)
-- [Back-of-the-Envelope (BOTE) Estimation & Scalability](#-back-of-the-envelope-bote-estimation--scalability)
-- ["Crack vs Smooth Surface" — System Analysis](#-crack-vs-smooth-surface--system-analysis)
-- [Third-Party Integration Bottlenecks & Rate Limits](#-third-party-integration-bottlenecks--rate-limits)
-- [Database Schema](#-database-schema)
-- [Testing](#-testing)
-- [Production Deployment](#-production-deployment)
-- [Mentors & Core Team](#-mentors--core-team)
-- [Known Issues & Roadmap](#-known-issues--roadmap)
-- [License](#-license)
+* [Version History](#version-history)
+* [System Architecture](#system-architecture)
+* [Tech Stack](#tech-stack)
+* [Repository Structure](#repository-structure)
+* [Getting Started](#getting-started)
+* [Environment Variables](#environment-variables)
+* [Dual Superadmin & Institutional Auth Guard](#dual-superadmin--institutional-auth-guard)
+* [Admin Portal & Multi-Tier Hardware Queue](#admin-portal--multi-tier-hardware-queue)
+* [Frontend Themes & Interactive Canvas Engines](#frontend-themes--interactive-canvas-engines)
+* [API Reference](#api-reference)
+* [Email Telemetry & Notification Workflow](#email-telemetry--notification-workflow)
+* [Back-of-the-Envelope (BOTE) Estimation & Scalability](#back-of-the-envelope-bote-estimation--scalability)
+* ["Crack vs Smooth Surface", System Analysis](#crack-vs-smooth-surface-system-analysis)
+* [Third-Party Integration Bottlenecks & Rate Limits](#third-party-integration-bottlenecks--rate-limits)
+* [Database Schema](#database-schema)
+* [Testing](#testing)
+* [Production Deployment](#production-deployment)
+* [Mentors & Core Team](#mentors--core-team)
+* [Known Issues & Roadmap](#known-issues--roadmap)
+* [License](#license)
 
 ---
 
-## 📌 Version History
+## Version History
 
 | Version | Status | Key Milestones & Changes |
 |---------|--------|---------------------------|
-| **v1.0.0** | ✅ Released | Initial frontend (Vite + Three.js) and Express server baseline. |
-| **v1.1.0** | ✅ Released | Supabase PostgreSQL schema, JWT authentication, core inventory routes. |
-| **v1.2.1** | ✅ Released | Frontend-backend integration, borrow/return logic, and route fixes. |
-| **v1.3.2** | ✅ Released | Nodemailer transport, SMTP config, and base transactional email dispatch. |
-| **v1.4.3** | ⚠️ Pre-release | Admin OTP approval (`request-otp` / `verify-otp`), 1–30 day rental cap, Day N-1 return reminders. |
-| **v1.4.4** | ✅ Released | Custom Message-ID, X-headers, plain-text fallback, and SMTP response logging. |
-| **v1.4.5** | ⚠️ Pre-release | Frontend dynamic `API_BASE` points to local backend on port 5000. End-to-end OTP borrow flow verified. |
-| **v1.4.6** | ⚠️ Pre-release | Sender pinned to verified Gmail, `test-email.cjs` probe, `002_seed_test_users.sql`. |
-| **v1.4.7** | ⚠️ Pre-release | RFC 2822 dynamic Message-ID, `validators/email.validator.ts` for 12-digit `@mail.jiit.ac.in` IDs. |
-| **v1.5.0** | ✅ Released | Redis sessions, `dbRead`/`dbWrite` split, BullMQ email queue, RBAC middleware, API response cache (30s TTL). |
-| **v1.6.0** | ✅ Released | Frontend UI merge (dark theme, Three.js backgrounds, sidebar, modals). CORS updated to `CLIENT_URL`. |
-| **v1.6.1** | ✅ Released | Purged hardcoded mock credentials, added PostgreSQL database reset scripts. |
-| **v1.6.2** | ✅ Released | OTP-based login (`send-otp` / `verify-otp`), institutional domain enforcement. |
-| **v1.6.4** | ✅ Released | Inventory CRUD + borrow flow wired end-to-end via authenticated API calls. |
-| **v1.7.0** | ✅ Released | **Backend hardening.** Server refuses to start without `JWT_SECRET`. Atomic SQL concurrency guards on `available_quantity` prevent double-borrowing. Added `000_create_tables.sql` base migration. |
-| **v2.0.0** | ✅ Released | **Institutional Auth & Dual Superadmin.** Strictly enforced `@mail.jiit.ac.in` institutional email format for students; registered accounts enter `PENDING` status awaiting admin verification; master superadmins locked to `vardaansaxena096@gmail.com` and `cicrinventory@gmail.com`. |
-| **v2.2.0** | ✅ Released | **Admin Portal & Queues.** Compact cyberpunk redesign for Admin Control Center; added Member Approval queue and Hardware Issue Requests queue with multi-tier sync across Supabase, REST API, and local storage fallback. |
-| **v2.3.0** | ✅ Released | **Cyber Telemetry Redesign.** Transactional emails updated to authentic cyber aesthetic (zero emojis); automated instant alerts for member signups, approvals, rejections, hardware requests, and dual superadmin instant CC notifications. |
-| **v2.4.0** | ✅ Released | **Frontend Architecture & Roster.** Auto-detecting dynamic `API_BASE` (localhost vs. Render production); CORS configured for Vercel; added **Meet The Developers** team showcase, collapsible Vault Index sidebar navigation, out-of-stock indicators, and color-coded transaction logs. |
-| **v2.5.0** | ✅ Released | **CanvasFX Visual Engines.** Added 60 FPS physics-based **Sakura (Cherry Blossom)** falling petals engine and cinematic **Avengers Assemble** theme featuring vibrating Captain America Vibranium shield with radial gradients, Arc Reactor HUD, and ambient energy sparks. |
-| **v2.5.1** | ✅ Released | **Production Deployment & Security Hardening.** Dual-endpoint hardware request fallback, theme contrast optimizations, verified SMTP fallback for Render production (`render.yaml`), Vercel SPA build config (`vercel.json`), and purge of compiled build artifacts from source control. |
-| **v2.6.0** | ✅ Released | **10-Min OTP Verification Popup, 10-Min Cooldown Gap, 5-Field Registration & Real-Time Audit Stream.** Security verification popup modal for sign-in requiring 6-digit email OTP (strictly valid for 10 minutes with enforced 10-minute gap before new OTP generation), 5-field registration (`Name`, `Email`, `Username`, `Enrollment Number`, `Batch`), flexible sign-in via Email/Username/Name, real-time System Audit & Activity Logs stream (`#admin-audit-section`), in-app item deletion, 6-second auto-sync engine, zero mock data. |
-| **v2.7.0** | ✅ Released | **Master Whitelist Enforcement, Theme Background Hardening & Complete Database Purge.** All test/pending data cleared across Supabase PostgreSQL tables (`borrow_records`, hardware issue requests, `audit_logs`, `inventory`, and non-admin user accounts); database strictly holds dual master superadmins (`vardaansaxena096@gmail.com` and `cicrinventory@gmail.com`); theme backgrounds hardened with `!important` rule overrides and dynamic client-side cloud API failover. |
-| **v2.8.0** | ✅ Released | **Zero-Latency 1-Click Approvals, Request De-duplication Engine, Tamper-Proof Autofilled Borrower Lock, Complete 54-Item Catalog & Cold-Start Session Recovery.** Instant optimistic UI card removal for hardware and member authorizations; atomic submit lock with composite content-based request de-duplication; automated read-only prefill for student borrower credentials; comprehensive 54-component robotics inventory with 500-unit limit; updated developer roster with crisp SVG links; and backend memory caching (15s TTL) with cold-start resilient auth recovery. |
-| **v2.8.1** | ✅ Released | **Mobile & Desktop Responsive Overhaul, Touch Interaction Optimization & Notification Telemetry Fix.** Comprehensive responsive overhaul across mobile and desktop; single-column catalog grid on mobile ($\le 640\text{px}$) with natural multi-line titles, smooth horizontal swipeable category pills, balanced 2x2 stats grid, responsive dashboard greeting & digital clock cockpit, 300ms tap latency removal via `touch-action: manipulation`, tactile active tap feedback, and real-time notification telemetry counter sync. |
-| **v2.9.0** | ✅ Released | **Hardware Return Dispatch with Dynamic Partial/Full Stepper, Admin Verification Portal, Roster Polish & Testing Email Routing.** Re-added Return Issued Component flow allowing borrowers to return issued hardware with customizable return quantities (`[-]` / `[+]` steppers and `Return All` shortcut); return requests dispatch to the Admin Portal for physical verification before inventory stock is restored; active loan badges with 1-click return triggers on inventory cards; updated developer showcase layout with integrated navigation sidebar; updated mentor guidance credits; and test email routing proxy redirecting all transactional activity emails to `vardaansaxena096@gmail.com` with branded test dispatch headers. |
-| **v2.9.1** | ✅ Released | **Production Clean Transactional Email Headers.** Removed the debug `[CICR TEST DISPATCH]` banner header across direct and queue-dispatched transactional emails, providing clean, authentic, and modern cyber templates across all user notifications. |
-| **v2.10.0** | ✅ Released | **7-Day Centralized Audit & Telemetry Log System.** Centralized backend log persistence with automated 7-day retention pruning scheduler (runs at boot + every 6 hours), real-time 7-day activity spectrum HUD with interactive day filtering, category counters (Auth, Inventory, Hardware, Loans, System), CSV export, manual retention sync trigger, live detail inspection modal, and client log dispatch pipeline. |
-| **v2.11.0** | ✅ Released | **Consolidated Multi-Component Return System ("Return Everything in 1 Go").** Unified bulk return manifest modal with interactive quantity steppers, FIFO loan allocation engine (`POST /api/borrow/bulk-return-request`) resolving multiple repeated checkouts, drawer & item detail entry points, and 1-click administrative verification workflow. |
-| **v2.12.0** | ✅ Released | **Multi-Theme Contrast Engine & Responsive Audit Hub.** Full text and button contrast overhaul across all 3 themes (Cyber Neon, Clean Light, Cherry Blossom Sakura) for Admin Control Center, stat boxes, tables, cards, and modals. Instant-reactivity audit range filtering (`7 Days (All)`, `Last 3 Days`, `Today (24h)`) with dynamic category counts and streamlined audit ledger layout. |
-| **v2.13.0** | ✅ Released (current) | **Cyber Calendar Picker, Active Loans Filter Precision, Complete Vault Restock & Showcase UI Perfection.** Interactive cyber calendar with duration badge and quick loan presets (`+3`, `+7 Default`, `+14`, `+30` days) for component issuing; fixed Active Loans filter to strictly isolate active unreturned loans without phantom returned component leaks; all 173 components safely returned to vault (100% available stock); locked developer showcase socials to 1 horizontal row with uniform card dimensions and fully responsive, touch-ready carousel side buttons; and hardened secret credentials handling. |
+| **v1.0.0** | Released | Initial frontend (Vite + Three.js) and Express server baseline. |
+| **v1.1.0** | Released | Supabase PostgreSQL schema, JWT authentication, core inventory routes. |
+| **v1.2.1** | Released | Frontend-backend integration, borrow/return logic, and route fixes. |
+| **v1.3.2** | Released | Nodemailer transport, SMTP config, and base transactional email dispatch. |
+| **v1.4.3** | Pre-release | Admin OTP approval (`request-otp` / `verify-otp`), 1–30 day rental cap, Day N-1 return reminders. |
+| **v1.4.4** | Released | Custom Message-ID, X-headers, plain-text fallback, and SMTP response logging. |
+| **v1.4.5** | Pre-release | Frontend dynamic `API_BASE` points to local backend on port 5000. End-to-end OTP borrow flow verified. |
+| **v1.4.6** | Pre-release | Sender pinned to verified Gmail, `test-email.cjs` probe, `002_seed_test_users.sql`. |
+| **v1.4.7** | Pre-release | RFC 2822 dynamic Message-ID, `validators/email.validator.ts` for 12-digit `@mail.jiit.ac.in` IDs. |
+| **v1.5.0** | Released | Redis sessions, `dbRead`/`dbWrite` split, BullMQ email queue, RBAC middleware, API response cache (30s TTL). |
+| **v1.6.0** | Released | Frontend UI merge (dark theme, Three.js backgrounds, sidebar, modals). CORS updated to `CLIENT_URL`. |
+| **v1.6.1** | Released | Purged hardcoded mock credentials, added PostgreSQL database reset scripts. |
+| **v1.6.2** | Released | OTP-based login (`send-otp` / `verify-otp`), institutional domain enforcement. |
+| **v1.6.4** | Released | Inventory CRUD + borrow flow wired end-to-end via authenticated API calls. |
+| **v1.7.0** | Released | **Backend hardening.** Server refuses to start without `JWT_SECRET`. Atomic SQL concurrency guards on `available_quantity` prevent double-borrowing. Added `000_create_tables.sql` base migration. |
+| **v2.0.0** | Released | **Institutional Auth & Dual Superadmin.** Strictly enforced `@mail.jiit.ac.in` institutional email format for students; registered accounts enter `PENDING` status awaiting admin verification; master superadmins locked to `vardaansaxena096@gmail.com` and `cicrinventory@gmail.com`. |
+| **v2.2.0** | Released | **Admin Portal & Queues.** Compact cyberpunk redesign for Admin Control Center; added Member Approval queue and Hardware Issue Requests queue with multi-tier sync across Supabase, REST API, and local storage fallback. |
+| **v2.3.0** | Released | **Cyber Telemetry Redesign.** Transactional emails updated to authentic cyber aesthetic (zero emojis); automated instant alerts for member signups, approvals, rejections, hardware requests, and dual superadmin instant CC notifications. |
+| **v2.4.0** | Released | **Frontend Architecture & Roster.** Auto-detecting dynamic `API_BASE` (localhost vs. Render production); CORS configured for Vercel; added **Meet The Developers** team showcase, collapsible Vault Index sidebar navigation, out-of-stock indicators, and color-coded transaction logs. |
+| **v2.5.0** | Released | **CanvasFX Visual Engines.** Added 60 FPS physics-based **Sakura (Cherry Blossom)** falling petals engine and cinematic **Avengers Assemble** theme featuring vibrating Captain America Vibranium shield with radial gradients, Arc Reactor HUD, and ambient energy sparks. |
+| **v2.5.1** | Released | **Production Deployment & Security Hardening.** Dual-endpoint hardware request fallback, theme contrast optimizations, verified SMTP fallback for Render production (`render.yaml`), Vercel SPA build config (`vercel.json`), and purge of compiled build artifacts from source control. |
+| **v2.6.0** | Released | **10-Min OTP Verification Popup, 10-Min Cooldown Gap, 5-Field Registration & Real-Time Audit Stream.** Security verification popup modal for sign-in requiring 6-digit email OTP (strictly valid for 10 minutes with enforced 10-minute gap before new OTP generation), 5-field registration (`Name`, `Email`, `Username`, `Enrollment Number`, `Batch`), flexible sign-in via Email/Username/Name, real-time System Audit & Activity Logs stream (`#admin-audit-section`), in-app item deletion, 6-second auto-sync engine, zero mock data. |
+| **v2.7.0** | Released | **Master Whitelist Enforcement, Theme Background Hardening & Complete Database Purge.** All test/pending data cleared across Supabase PostgreSQL tables (`borrow_records`, hardware issue requests, `audit_logs`, `inventory`, and non-admin user accounts); database strictly holds dual master superadmins (`vardaansaxena096@gmail.com` and `cicrinventory@gmail.com`); theme backgrounds hardened with `!important` rule overrides and dynamic client-side cloud API failover. |
+| **v2.8.0** | Released | **Zero-Latency 1-Click Approvals, Request De-duplication Engine, Tamper-Proof Autofilled Borrower Lock, Complete 54-Item Catalog & Cold-Start Session Recovery.** Instant optimistic UI card removal for hardware and member authorizations; atomic submit lock with composite content-based request de-duplication; automated read-only prefill for student borrower credentials; comprehensive 54-component robotics inventory with 500-unit limit; updated developer roster with crisp SVG links; and backend memory caching (15s TTL) with cold-start resilient auth recovery. |
+| **v2.8.1** | Released | **Mobile & Desktop Responsive Overhaul, Touch Interaction Optimization & Notification Telemetry Fix.** Comprehensive responsive overhaul across mobile and desktop; single-column catalog grid on mobile ($\le 640\text{px}$) with natural multi-line titles, smooth horizontal swipeable category pills, balanced 2x2 stats grid, responsive dashboard greeting & digital clock cockpit, 300ms tap latency removal via `touch-action: manipulation`, tactile active tap feedback, and real-time notification telemetry counter sync. |
+| **v2.9.0** | Released | **Hardware Return Dispatch with Dynamic Partial/Full Stepper, Admin Verification Portal, Roster Polish & Testing Email Routing.** Re-added Return Issued Component flow allowing borrowers to return issued hardware with customizable return quantities (`[-]` / `[+]` steppers and `Return All` shortcut); return requests dispatch to the Admin Portal for physical verification before inventory stock is restored; active loan badges with 1-click return triggers on inventory cards; updated developer showcase layout with integrated navigation sidebar; updated mentor guidance credits; and test email routing proxy redirecting all transactional activity emails to `vardaansaxena096@gmail.com` with branded test dispatch headers. |
+| **v2.9.1** | Released | **Production Clean Transactional Email Headers.** Removed the debug `[CICR TEST DISPATCH]` banner header across direct and queue-dispatched transactional emails, providing clean, authentic, and modern cyber templates across all user notifications. |
+| **v2.10.0** | Released | **7-Day Centralized Audit & Telemetry Log System.** Centralized backend log persistence with automated 7-day retention pruning scheduler (runs at boot + every 6 hours), real-time 7-day activity spectrum HUD with interactive day filtering, category counters (Auth, Inventory, Hardware, Loans, System), CSV export, manual retention sync trigger, live detail inspection modal, and client log dispatch pipeline. |
+| **v2.11.0** | Released | **Consolidated Multi-Component Return System ("Return Everything in 1 Go").** Unified bulk return manifest modal with interactive quantity steppers, FIFO loan allocation engine (`POST /api/borrow/bulk-return-request`) resolving multiple repeated checkouts, drawer & item detail entry points, and 1-click administrative verification workflow. |
+| **v2.12.0** | Released | **Multi-Theme Contrast Engine & Responsive Audit Hub.** Full text and button contrast overhaul across all 3 themes (Cyber Neon, Clean Light, Cherry Blossom Sakura) for Admin Control Center, stat boxes, tables, cards, and modals. Instant-reactivity audit range filtering (`7 Days (All)`, `Last 3 Days`, `Today (24h)`) with dynamic category counts and streamlined audit ledger layout. |
+| **v2.13.0** | Released (current) | **Cyber Calendar Picker, Active Loans Filter Precision, Complete Vault Restock & Showcase UI Perfection.** Interactive cyber calendar with duration badge and quick loan presets (`+3`, `+7 Default`, `+14`, `+30` days) for component issuing; fixed Active Loans filter to strictly isolate active unreturned loans without phantom returned component leaks; all 173 components safely returned to vault (100% available stock); locked developer showcase socials to 1 horizontal row with uniform card dimensions and fully responsive, touch-ready carousel side buttons; and hardened secret credentials handling. |
 
-> The current active release is **v2.13.0 — Cyber Calendar Picker, Active Loans Filter Precision, Complete Vault Restock & Showcase UI Perfection**. Both the Vercel frontend and Render backend run in production with live database sync, multi-tier hardware queues, 7-day centralized audit persistence, and cross-theme readability.
+> The current active release is **v2.13.0, Cyber Calendar Picker, Active Loans Filter Precision, Complete Vault Restock & Showcase UI Perfection**. Both the Vercel frontend and Render backend run in production with live database sync, multi-tier hardware queues, 7-day centralized audit persistence, and cross-theme readability.
 
-### 🏷️ Version Registry (Git Tags)
+### Version Registry (Git Tags)
 
 | Version | Git Tag | Status | Focus Area |
 |---------|---------|--------|------------|
-| **v1.0.0** | `v1.0.0` | ✅ Released | Initial MVP |
-| **v1.5.0** | `v1.5.0` | ✅ Released | Redis Caching & Queue |
-| **v1.7.0** | `v1.7.0` | ✅ Released | Backend Hardening & Atomic Guards |
-| **v2.0.0** | `v2.0.0` | ✅ Released | Dual Superadmin & Institutional Auth |
-| **v2.2.0** | `v2.2.0` | ✅ Released | Admin Portal & Hardware Issue Queues |
-| **v2.3.0** | `v2.3.0` | ✅ Released | Cyber-Themed Transactional Telemetry |
-| **v2.4.0** | `v2.4.0` | ✅ Released | Developer Roster & Collapsible Navigation |
-| **v2.5.0** | `v2.5.0` | ✅ Released | Avengers & Sakura Canvas Engines |
-| **v2.5.1** | `v2.5.1` | ✅ Released | Production Deployments & Security Polish |
-| **v2.6.0** | `v2.6.0`, `v2.6` | ✅ Released | 10-Min OTP Popup, 10-Min Cooldown Gap, 5-Field Registration & Audit Stream |
-| **v2.7.0** | `v2.7.0` | ✅ Released | Database Purge, Master Admin Whitelist & Theme Engine Hardening |
-| **v2.8.0** | `v2.8.0`, `v2.8` | ✅ Released | 1-Click Approvals, Request De-duplication, Locked Borrower Details & 54-Item Catalog |
-| **v2.8.1** | `v2.8.1`, `v2.8` | ✅ Released | Mobile & Desktop Responsive Overhaul, Touch Interaction & Telemetry Sync |
-| **v2.9.0** | `v2.9.0`, `v2.9` | ✅ Released | Hardware Return Dispatch, Partial Stepper, Admin Verification & Test Mail Routing |
-| **v2.9.1** | `v2.9.1` | ✅ Released | Production Clean Transactional Email Headers |
-| **v2.10.0** | `v2.10.0`, `v2.10` | ✅ Released | 7-Day Centralized Audit Ledger, Telemetry HUD & Backend Auto-Retention |
-| **v2.11.0** | `v2.11.0`, `v2.11` | ✅ Released | Consolidated Multi-Item Return ("Return in 1 Go") & Stepper Manifest |
-| **v2.12.0** | `v2.12.0`, `v2.12` | ✅ Released | Multi-Theme Contrast Engine, Streamlined Audit & Responsive Range Filter |
-| **v2.13.0** | `v2.13.0`, `v2.13` | ✅ Released | Cyber Calendar Picker, Active Loans Filter Precision, Vault Restock & Showcase UI |
+| **v1.0.0** | `v1.0.0` | Released | Initial MVP |
+| **v1.5.0** | `v1.5.0` | Released | Redis Caching & Queue |
+| **v1.7.0** | `v1.7.0` | Released | Backend Hardening & Atomic Guards |
+| **v2.0.0** | `v2.0.0` | Released | Dual Superadmin & Institutional Auth |
+| **v2.2.0** | `v2.2.0` | Released | Admin Portal & Hardware Issue Queues |
+| **v2.3.0** | `v2.3.0` | Released | Cyber-Themed Transactional Telemetry |
+| **v2.4.0** | `v2.4.0` | Released | Developer Roster & Collapsible Navigation |
+| **v2.5.0** | `v2.5.0` | Released | Avengers & Sakura Canvas Engines |
+| **v2.5.1** | `v2.5.1` | Released | Production Deployments & Security Polish |
+| **v2.6.0** | `v2.6.0`, `v2.6` | Released | 10-Min OTP Popup, 10-Min Cooldown Gap, 5-Field Registration & Audit Stream |
+| **v2.7.0** | `v2.7.0` | Released | Database Purge, Master Admin Whitelist & Theme Engine Hardening |
+| **v2.8.0** | `v2.8.0`, `v2.8` | Released | 1-Click Approvals, Request De-duplication, Locked Borrower Details & 54-Item Catalog |
+| **v2.8.1** | `v2.8.1`, `v2.8` | Released | Mobile & Desktop Responsive Overhaul, Touch Interaction & Telemetry Sync |
+| **v2.9.0** | `v2.9.0`, `v2.9` | Released | Hardware Return Dispatch, Partial Stepper, Admin Verification & Test Mail Routing |
+| **v2.9.1** | `v2.9.1` | Released | Production Clean Transactional Email Headers |
+| **v2.10.0** | `v2.10.0`, `v2.10` | Released | 7-Day Centralized Audit Ledger, Telemetry HUD & Backend Auto-Retention |
+| **v2.11.0** | `v2.11.0`, `v2.11` | Released | Consolidated Multi-Item Return ("Return in 1 Go") & Stepper Manifest |
+| **v2.12.0** | `v2.12.0`, `v2.12` | Released | Multi-Theme Contrast Engine, Streamlined Audit & Responsive Range Filter |
+| **v2.13.0** | `v2.13.0`, `v2.13` | Released | Cyber Calendar Picker, Active Loans Filter Precision, Vault Restock & Showcase UI |
 
 ---
 
-## 🏗️ System Architecture
+## Security and Reliability Update (2026-10-30)
+
+This update fixes the iPhone Safari blank developer card, restores local persistence, and closes the confirmed findings from the security assessment.
+
+### Client and mobile
+* Fixed the "Meet Our Squad" hero card going blank on iOS Safari by removing `backdrop-filter` from the animated card and carousel, and moving the fade to the text column.
+* Preserved cart, pending requests, dismissed requests, and read state across reloads by no longer deleting the `cicr_fresh_epoch` and `cicr_dismissed_requests` keys during the startup cache sweep.
+* Removed the client-side legacy authentication encryption key and the `legacy_auth` payload from login and password reset.
+* Hardened the cart checkout path so HTTP errors no longer clear the cart or create local requests.
+
+### Backend and API
+* Corrected the rate limiter key generator so limits are applied per client IP; added a regression test that verifies the remaining count decrements.
+* Fixed the CORS allowlist for `https://cicrinventory.vercel.app` and changed rejected origins from HTTP 500 to JSON 403.
+* Removed Neon hostnames from the public health payload and removed version and uptime from the public root response.
+* Unified login failure messages to prevent account enumeration.
+* Set `X-XSS-Protection` to `0`.
+* Added CSP, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, and `Permissions-Policy` headers in `vercel.json`.
+* Upgraded Express, Nodemailer, node-cron, zod, body-parser, proxy-addr, Vite, and related transitive packages. `npm audit` reports zero vulnerabilities in both lockfiles.
+
+### Verification
+* Backend: 171 tests pass, including `backend/test/security-hardening.test.cjs`.
+* Frontend: TypeScript and Vite production build pass.
+* The rebuilt client bundle contains no legacy `CICR_VAULT` key or `legacy_auth` string.
+
+### Open items
+* The client SHA-256 digest remains a replayable credential until the password-scheme migration is completed.
+* JWTs remain in `localStorage`, and the CSP still permits inline scripts and handlers.
+* Public `/api/items` still exposes storage locations and exact stock; public `/api/stats` remains unauthenticated.
+* The server-side legacy authentication path remains for old clients; rotate or remove it after the deprecation window.
+
+---
+
+## System Architecture
 
 ```
 ┌────────────────────────────────────────────────────────┐
@@ -156,15 +188,15 @@ Track, reserve, and deploy microcontrollers, sensors, and actuators from JIIT's 
 2. **Instant Alert**: Backend saves the request to the pending queue with multi-tier sync (Supabase + local storage fallback) and dispatches an instant cyber notification email to the Dual Superadmins (`vardaansaxena096@gmail.com` and `cicrinventory@gmail.com`).
 3. **Admin Review**: Admin opens the **Admin Portal** (`GET /api/borrow/requests`), inspects purpose, requested duration, and current inventory stock.
 4. **Approval & Stock Decrement**: Admin clicks Approve (`POST /api/borrow/requests/:id/approve`):
-   - Database atomically decrements `available_quantity` (`gte` stock check prevents over-allocation).
-   - A `borrow_records` row is created with calculated `due_date` (`requested_at + duration_days`).
-   - Request status shifts to `APPROVED`.
+   * Database atomically decrements `available_quantity` (`gte` stock check prevents over-allocation).
+   * A `borrow_records` row is created with calculated `due_date` (`requested_at + duration_days`).
+   * Request status shifts to `APPROVED`.
 5. **Telemetry Dispatch**: Fire-and-forget confirmation email is dispatched to the student with borrow details, return deadline, and component care instructions, alongside an admin audit confirmation.
 6. **Automated Reminders**: `reminderService` (daily cron + startup scan) tracks loan status and alerts borrowers on Day N-1 (due tomorrow), Day Due, and overdue intervals.
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Layer | Technology | Details |
 |-------|------------|---------|
@@ -182,7 +214,7 @@ Track, reserve, and deploy microcontrollers, sensors, and actuators from JIIT's 
 
 ---
 
-## 📁 Repository Structure
+## Repository Structure
 
 ```
 CICR_Inventory/
@@ -256,15 +288,15 @@ CICR_Inventory/
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
-- **Node.js**: `≥ 18.0.0` (tested on Node v20 & v24)
-- **npm**: `≥ 9.0.0`
-- **Supabase Account**: A PostgreSQL project with PostgREST enabled.
-- **Gmail Account**: With 2-Factor Authentication enabled and a 16-character **App Password** generated.
-- **Redis** *(Optional)*: Local Redis instance or cloud provider (e.g. Upstash). In-memory fallback activates automatically if omitted.
+* **Node.js**: `≥ 18.0.0` (tested on Node v20 & v24)
+* **npm**: `≥ 9.0.0`
+* **Supabase Account**: A PostgreSQL project with PostgREST enabled.
+* **Gmail Account**: With 2-Factor Authentication enabled and a 16-character **App Password** generated.
+* **Redis** *(Optional)*: Local Redis instance or cloud provider (e.g. Upstash). In-memory fallback activates automatically if omitted.
 
 ### 1. Clone & Install Dependencies
 
@@ -290,7 +322,7 @@ cd backend
 cp .env.example .env
 ```
 
-Edit `backend/.env` with your project secrets (see [Environment Variables](#-environment-variables)).
+Edit `backend/.env` with your project secrets (see [Environment Variables](#environment-variables)).
 
 ### 3. Initialize Database Schema
 
@@ -322,7 +354,7 @@ Visit `http://localhost:5173` in your browser.
 
 ---
 
-## 🔑 Environment Variables
+## Environment Variables
 
 All backend configuration is managed through environment variables in `backend/.env`:
 
@@ -330,18 +362,18 @@ All backend configuration is managed through environment variables in `backend/.
 |----------|:--------:|---------|-------------|
 | `PORT` | No | `5000` | Local HTTP port for the Express REST API. |
 | `NODE_ENV` | No | `development` | Environment mode (`development` / `production`). |
-| `SUPABASE_URL` | **Yes** | — | Supabase project API URL (e.g. `https://xyz.supabase.co`). |
-| `SUPABASE_ANON_KEY` | **Yes** | — | Supabase public anonymous key (RLS-protected). |
-| `SUPABASE_READ_URL` | No | — | Dedicated read replica URL for `dbRead`. Falls back to `SUPABASE_URL`. |
-| `JWT_SECRET` | **Yes** | — | Cryptographic secret for signing and verifying JWT tokens. Server halts if missing. |
+| `SUPABASE_URL` | **Yes** |, | Supabase project API URL (e.g. `https://xyz.supabase.co`). |
+| `SUPABASE_ANON_KEY` | **Yes** |, | Supabase public anonymous key (RLS-protected). |
+| `SUPABASE_READ_URL` | No |, | Dedicated read replica URL for `dbRead`. Falls back to `SUPABASE_URL`. |
+| `JWT_SECRET` | **Yes** |, | Cryptographic secret for signing and verifying JWT tokens. Server halts if missing. |
 | `JWT_ISSUER` | No | `cicr-inventory` | Optional JWT issuer claim verification. |
 | `JWT_AUDIENCE` | No | `cicr-members` | Optional JWT audience claim verification. |
-| `REDIS_URL` | No | — | Redis connection string (e.g. `redis://127.0.0.1:6379`). Defaults to in-memory fallback. |
+| `REDIS_URL` | No |, | Redis connection string (e.g. `redis://127.0.0.1:6379`). Defaults to in-memory fallback. |
 | `SESSION_SECRET` | No | `cicr_session_secret` | Session cookie signing key. |
 | `SMTP_HOST` | No | `smtp.gmail.com` | SMTP host for outbound transactional emails. |
 | `SMTP_PORT` | No | `587` | SMTP port (STARTTLS standard 587). |
 | `SMTP_USER` | **Yes** | `cicrinventory@gmail.com` | Authenticating sender Gmail address. Mock mode activates if left blank. |
-| `SMTP_PASS` | **Yes** | — | 16-character Google App Password (requires 2FA). |
+| `SMTP_PASS` | **Yes** |, | 16-character Google App Password (requires 2FA). |
 | `SMTP_FROM` | No | `"CICR Inventory" <cicrinventory@gmail.com>` | Formatted RFC 5322 From header. |
 | `SMTP_REPLY_TO` | No | `"CICR Inventory (No-Reply)" <noreply.cicrinventory@gmail.com>` | Reply-To header. |
 | `REMINDER_CRON` | No | `0 9 * * *` | Cron schedule for loan sweeps (default: daily at 09:00 AM). |
@@ -349,7 +381,7 @@ All backend configuration is managed through environment variables in `backend/.
 
 ---
 
-## 🛡️ Dual Superadmin & Institutional Auth Guard
+## Dual Superadmin & Institutional Auth Guard
 
 To safeguard club hardware and maintain strict audit accountability, the system enforces a strict two-tier security model:
 
@@ -371,8 +403,8 @@ To safeguard club hardware and maintain strict audit accountability, the system 
 
 ### 1. Dual Master Superadmins
 Administrative privileges and Admin Portal access are restricted to two authorized master identities:
-- **`vardaansaxena096@gmail.com`** (Main Master Admin)
-- **`cicrinventory@gmail.com`** (CICR System Admin & Telemetry Relay)
+* **`vardaansaxena096@gmail.com`** (Main Master Admin)
+* **`cicrinventory@gmail.com`** (CICR System Admin & Telemetry Relay)
 
 Any login or registration from these identities is automatically granted `APPROVED` status with full `ADMIN` role persistence across restarts.
 
@@ -387,37 +419,37 @@ Student registration enforces collection and validation of 5 required credential
 
 ### 3. Flexible Multi-Identifier Sign-In
 Users and administrators can authenticate via multiple identity vectors:
-- **Sign In Using**: `Email` OR `Username` OR `Full Name` + `Password`.
-- The authentication controller dynamically resolves the identifier across Supabase PostgreSQL records, username metadata lookups, and administrator aliases (`vardaan`, `vardaansaxena`, `cicradmin`, `CICR Admin`).
+* **Sign In Using**: `Email` OR `Username` OR `Full Name` + `Password`.
+* The authentication controller dynamically resolves the identifier across Supabase PostgreSQL records, username metadata lookups, and administrator aliases (`vardaan`, `vardaansaxena`, `cicradmin`, `CICR Admin`).
 
 ### 4. User-Only 5-Minute Login Security Notice
 Upon every successful sign-in:
-- The system autogenerates a time-sensitive security transmission featuring a unique 6-digit session authorization code.
-- **Validity Window**: Strictly valid for **5 minutes only**.
-- **Privacy & Isolation**: Dispatched **strictly to the logging-in user's email only**. No administrators receive this login alert.
+* The system autogenerates a time-sensitive security transmission featuring a unique 6-digit session authorization code.
+* **Validity Window**: Strictly valid for **5 minutes only**.
+* **Privacy & Isolation**: Dispatched **strictly to the logging-in user's email only**. No administrators receive this login alert.
 
 ### 5. Student Registration Approval Gate & Admin Alert
-- When an eligible student submits registration, their account enters **`PENDING`** status.
-- An immediate cyber telemetry alert is dispatched to both Superadmins displaying all 5 applicant credentials (`Name`, `Email`, `Username`, `Enrollment`, `Batch`).
-- The student cannot log in until an administrator reviews and approves the account in the **Admin Portal**.
-- Upon approval, the student receives an automated **Account Approved** welcome email detailing access guidelines.
+* When an eligible student submits registration, their account enters **`PENDING`** status.
+* An immediate cyber telemetry alert is dispatched to both Superadmins displaying all 5 applicant credentials (`Name`, `Email`, `Username`, `Enrollment`, `Batch`).
+* The student cannot log in until an administrator reviews and approves the account in the **Admin Portal**.
+* Upon approval, the student receives an automated **Account Approved** welcome email detailing access guidelines.
 
 ---
 
-## 📊 Admin Portal & Multi-Tier Hardware Queue
+## Admin Portal & Multi-Tier Hardware Queue
 
 The **Admin Portal** (`#admin-view`) is accessible only to authenticated administrators. It provides a cyberpunk command center for managing requests and members:
 
 ### 1. Hardware Issue Requests Queue
 Instead of direct checkouts, students submit hardware requests with details on project purpose and required duration. Admins can:
-- **Inspect**: Review the student's name, enrollment number, requested component, required quantity, and project justification.
-- **Approve**: Atomically decrements warehouse inventory, creates an active loan record, computes the return deadline, and triggers confirmation emails to the borrower and CCs superadmins.
-- **Reject**: Rejects the request with an optional note and notifies the student via email.
+* **Inspect**: Review the student's name, enrollment number, requested component, required quantity, and project justification.
+* **Approve**: Atomically decrements warehouse inventory, creates an active loan record, computes the return deadline, and triggers confirmation emails to the borrower and CCs superadmins.
+* **Reject**: Rejects the request with an optional note and notifies the student via email.
 
 ### 2. Member Approvals Queue
-- Real-time queue displaying newly registered students awaiting verification.
-- One-click **Approve** (activates student access) or **Reject** (revokes registration).
-- Role management allowing administrators to promote approved members to `ADMIN` or demote to `MEMBER`.
+* Real-time queue displaying newly registered students awaiting verification.
+* One-click **Approve** (activates student access) or **Reject** (revokes registration).
+* Role management allowing administrators to promote approved members to `ADMIN` or demote to `MEMBER`.
 
 ### 3. Multi-Tier Resilience Sync
 Hardware requests and user approval states utilize a multi-tier persistence pipeline:
@@ -426,29 +458,29 @@ Hardware requests and user approval states utilize a multi-tier persistence pipe
 3. **Local JSON Backing** (`hardware_requests_data.json` & `user_approval_data.json`): Protects against cloud network interrupts, guaranteeing that pending requests and member reviews survive server restarts.
 
 ### 4. Direct In-App Item Deletion & Cascading Clean
-- Authorized administrators can permanently delete items directly from vault item cards (`.btn-card-delete-item`) or the Component Detail Modal (`#btn-modal-delete-item`).
-- **Cyber Confirmation Shield**: Prompts a confirmation modal (`#delete-confirm-modal`) with component telemetry before deletion.
-- **Relational Integrity**: Automatically cascades and deletes historical borrow records linked to the item in PostgreSQL before deleting the inventory row, preventing foreign-key constraints.
-- **Emergency Superadmin Telemetry**: Dispatches an instant high-priority red-badge email notification to all master superadmins (`vardaansaxena096@gmail.com` and `cicrinventory@gmail.com`) documenting the deleted item name, category, quantity, location, timestamp, and deleting admin credentials.
+* Authorized administrators can permanently delete items directly from vault item cards (`.btn-card-delete-item`) or the Component Detail Modal (`#btn-modal-delete-item`).
+* **Cyber Confirmation Shield**: Prompts a confirmation modal (`#delete-confirm-modal`) with component telemetry before deletion.
+* **Relational Integrity**: Automatically cascades and deletes historical borrow records linked to the item in PostgreSQL before deleting the inventory row, preventing foreign-key constraints.
+* **Emergency Superadmin Telemetry**: Dispatches an instant high-priority red-badge email notification to all master superadmins (`vardaansaxena096@gmail.com` and `cicrinventory@gmail.com`) documenting the deleted item name, category, quantity, location, timestamp, and deleting admin credentials.
 
 ### 5. System Audit & Activity Logs Command Center
-- Live telemetry center (`#admin-audit-section`) integrated into the Admin Portal stream tracking all operations across the platform:
-  - **`AUTH`**: New student registrations, admin account approvals, rejections, role modifications, user deletions, and user sign-ins.
-  - **`INVENTORY`**: Component catalog additions, stock quantity adjustments, and deletions.
-  - **`HARDWARE`**: Student hardware issue requests, administrative approvals, and rejections.
-  - **`LOANS`**: Component checkout events, OTP approvals, and inventory returns.
-- Interactive category filter tabs (`ALL`, `AUTH`, `INVENTORY`, `HARDWARE`, `LOANS`) and instant substring search filter.
-- Distinct color-coded badge indicators (Green for creation, Red for deletion/rejection, Cyan for auth/sign-in, Yellow for modification).
+* Live telemetry center (`#admin-audit-section`) integrated into the Admin Portal stream tracking all operations across the platform:
+  * **`AUTH`**: New student registrations, admin account approvals, rejections, role modifications, user deletions, and user sign-ins.
+  * **`INVENTORY`**: Component catalog additions, stock quantity adjustments, and deletions.
+  * **`HARDWARE`**: Student hardware issue requests, administrative approvals, and rejections.
+  * **`LOANS`**: Component checkout events, OTP approvals, and inventory returns.
+* Interactive category filter tabs (`ALL`, `AUTH`, `INVENTORY`, `HARDWARE`, `LOANS`) and instant substring search filter.
+* Distinct color-coded badge indicators (Green for creation, Red for deletion/rejection, Cyan for auth/sign-in, Yellow for modification).
 
 ### 6. Real-Time 6-Second Auto-Sync Engine
-- Client-side background daemon (`DatabaseManager.startAutoSync(6000)`) polls the Express API and Supabase every 6 seconds:
-  - Auto-refreshes warehouse inventory stock counts and availability.
-  - For active administrators: polls pending hardware requests, user approvals queue, and live audit log stream.
-  - Guarantees immediate cross-browser reactivity across all devices without manual page reloads.
+* Client-side background daemon (`DatabaseManager.startAutoSync(6000)`) polls the Express API and Supabase every 6 seconds:
+  * Auto-refreshes warehouse inventory stock counts and availability.
+  * For active administrators: polls pending hardware requests, user approvals queue, and live audit log stream.
+  * Guarantees immediate cross-browser reactivity across all devices without manual page reloads.
 
 ---
 
-## 🎨 Frontend Themes & Interactive Canvas Engines
+## Frontend Themes & Interactive Canvas Engines
 
 The client features dynamic visual engines rendered via HTML5 Canvas 2D and Three.js:
 
@@ -461,26 +493,26 @@ Theme Switcher (src/main.ts) ──┼── Sakura (Cherry Blossom) ── 60 F
 ```
 
 ### 1. Avengers Assemble Theme
-- **Captain America Vibranium Shield**: Rendered on a full-screen canvas with metallic concentric rings, deep blue central medallion, crisp radial gradients, and animated ambient red aura.
-- **Arc Reactor HUD**: Pulsing cyan energy core with rotating technical reticles, angle brackets, and telemetry grids.
-- **Energy Sparks**: Ambient ascending sparks with randomized velocity and alpha blending.
+* **Captain America Vibranium Shield**: Rendered on a full-screen canvas with metallic concentric rings, deep blue central medallion, crisp radial gradients, and animated ambient red aura.
+* **Arc Reactor HUD**: Pulsing cyan energy core with rotating technical reticles, angle brackets, and telemetry grids.
+* **Energy Sparks**: Ambient ascending sparks with randomized velocity and alpha blending.
 
 ### 2. Cherry Blossom (Sakura) Theme
-- **Physics-Based Petal Engine**: Simulates 75 independent floral petals falling at 60 frames per second.
-- **Complex Dynamics**: Features sinusoidal horizontal sway, 3D flip angle simulation via cosine scaling, randomized rotational drift, and soft dual-gradient coloring (`#ffd1e8` to `#ec4899`).
+* **Physics-Based Petal Engine**: Simulates 75 independent floral petals falling at 60 frames per second.
+* **Complex Dynamics**: Features sinusoidal horizontal sway, 3D flip angle simulation via cosine scaling, randomized rotational drift, and soft dual-gradient coloring (`#ffd1e8` to `#ec4899`).
 
 ### 3. Meet The Developers & Mentors
 An interactive section celebrating the engineering minds behind the CICR Robotics Vault:
-- **Under The Guidance of**: Mentor Gunjan Pal (*Management Head, CICR*).
-- **Meet The Developers**: Core engineering team members Vardaan Saxena, Kushagra Garg, Mahak Katahara, and Divyam Jain with custom glowing profile frames and role badges.
+* **Under The Guidance of**: Mentor Gunjan Pal (*Management Head, CICR*).
+* **Meet The Developers**: Core engineering team members Vardaan Saxena, Kushagra Garg, Mahak Katahara, and Divyam Jain with custom glowing profile frames and role badges.
 
 ### 4. Collapsible Vault Index
-- Left-sidebar collapsible drawer organizing hardware by categories: **Controllers**, **Sensors**, **Actuators**, **Power**, and **Tools**.
-- Real-time out-of-stock badges and color-coded transaction logs.
+* Left-sidebar collapsible drawer organizing hardware by categories: **Controllers**, **Sensors**, **Actuators**, **Power**, and **Tools**.
+* Real-time out-of-stock badges and color-coded transaction logs.
 
 ---
 
-## 📡 API Reference
+## API Reference
 
 Base URL (Local): `http://localhost:5000` · Base URL (Production): `https://cicr-inventory-backend.onrender.com`
 
@@ -542,7 +574,7 @@ Auth Scheme: `Authorization: Bearer <JWT>`
 
 ---
 
-## ✉️ Email Telemetry & Notification Workflow
+## Email Telemetry & Notification Workflow
 
 Transactional emails are handled in `backend/src/services/emailService.ts`. All templates follow a **cyber aesthetic** (dark slate backgrounds, cyan accents, monospace metadata blocks, and zero emojis).
 
@@ -565,57 +597,57 @@ Transactional emails are handled in `backend/src/services/emailService.ts`. All 
 
 ### Automated Triggers & Email Notification Matrix
 
-#### 👨‍💼 Admin Notification Matrix
+#### Admin Notification Matrix
 Administrators strictly receive automated notifications for all operational laboratory events:
 1. **Due Date Reminders (Other Borrowers & Own Issued Components)**: Automated sweeps scan for loans due tomorrow (`sendUpcomingReminder`) and items due today or overdue (`sendReturnReminder` / `sendDueReminder`). Notifications are dispatched to both the borrower and all superadmins, ensuring complete visibility over other students' and admins' own borrowed equipment.
 2. **New Account Registration Requests**: Instant cyber notification dispatched to all superadmins whenever a new student registers, containing full applicant telemetry: **Full Name**, **College Email**, **Username**, **Enrollment Number**, and **Batch**.
 3. **Component Issue Requests + Return Notifications**:
-   - **Issue Request**: Sent to superadmins whenever a student requests hardware from the catalog, detailing request ID, component, requested quantity, purpose, and estimated return date.
-   - **Checkout Confirmation**: Telemetry receipt dispatched upon admin approval.
-   - **Return Notification**: Immediate return notification sent to superadmins confirming that hardware has been returned and restocked in the vault.
+   * **Issue Request**: Sent to superadmins whenever a student requests hardware from the catalog, detailing request ID, component, requested quantity, purpose, and estimated return date.
+   * **Checkout Confirmation**: Telemetry receipt dispatched upon admin approval.
+   * **Return Notification**: Immediate return notification sent to superadmins confirming that hardware has been returned and restocked in the vault.
 4. **Admin Inventory Add / Remove Component Alerts**:
-   - **Item Added**: When any admin vaults a new component, all superadmins receive an instant notification with initial stock, category, location, and registration details.
-   - **Item Deleted**: When any admin deletes an item, a high-priority telemetry alert is sent to all superadmins documenting the purged item name, quantity, category, and deleting admin credentials.
+   * **Item Added**: When any admin vaults a new component, all superadmins receive an instant notification with initial stock, category, location, and registration details.
+   * **Item Deleted**: When any admin deletes an item, a high-priority telemetry alert is sent to all superadmins documenting the purged item name, quantity, category, and deleting admin credentials.
 
-#### 👤 User-Only Sign-In Notice
-- **Login Security Transmission**: Upon successful sign-in, an autogenerated email is dispatched **strictly to the account holder**.
-- **No administrators receive this transmission** (isolated for user privacy).
-- **5-Minute Expiration**: The session authorization code and sign-in notice are explicitly valid for **5 minutes only**.
+#### User-Only Sign-In Notice
+* **Login Security Transmission**: Upon successful sign-in, an autogenerated email is dispatched **strictly to the account holder**.
+* **No administrators receive this transmission** (isolated for user privacy).
+* **5-Minute Expiration**: The session authorization code and sign-in notice are explicitly valid for **5 minutes only**.
 
 ---
 
-## 🧮 Back-of-the-Envelope (BOTE) Estimation & Scalability
+## Back-of-the-Envelope (BOTE) Estimation & Scalability
 
 A detailed derivation is available in [`docs/BOTE_ESTIMATION.md`](./docs/BOTE_ESTIMATION.md). Key throughput limits for club operations:
 
 ### Gmail Free Tier Quota
-- Gmail SMTP free tier allows up to **500 outbound emails/day/account**.
-- A standard hardware lifecycle consumes ~3 emails (request/approval + borrow receipt + return receipt).
-- **Daily Ceiling**:
+* Gmail SMTP free tier allows up to **500 outbound emails/day/account**.
+* A standard hardware lifecycle consumes ~3 emails (request/approval + borrow receipt + return receipt).
+* **Daily Ceiling**:
   $$\text{Max Workflows/Day} = \frac{500}{3} \approx 166 \text{ complete borrow workflows/day}$$
-- Sufficient for collegiate robotics club operations (~10–30 daily interactions).
+* Sufficient for collegiate robotics club operations (~10–30 daily interactions).
 
 ### Concurrency & Performance
-- **Web API Tier**: Express 4 + Supabase PostgREST connection pooling supports **500–1,000 concurrent active users** with $p95 < 1\text{s}$.
-- **Memory Footprint**: Redis queue job size is ~2 KB. Tracking 10,000 reminder jobs requires only **~20 MB** of queue memory.
-- **Enterprise Escape Hatch**: For campus-wide scaling (>10,000 students), transition `emailService.ts` from Nodemailer/Gmail to **AWS SES** or **Resend** ($0.10 per 1,000 emails).
+* **Web API Tier**: Express 4 + Supabase PostgREST connection pooling supports **500–1,000 concurrent active users** with $p95 < 1\text{s}$.
+* **Memory Footprint**: Redis queue job size is ~2 KB. Tracking 10,000 reminder jobs requires only **~20 MB** of queue memory.
+* **Enterprise Escape Hatch**: For campus-wide scaling (>10,000 students), transition `emailService.ts` from Nodemailer/Gmail to **AWS SES** or **Resend** ($0.10 per 1,000 emails).
 
 ---
 
-## ⚖️ "Crack vs Smooth Surface" — System Analysis
+## "Crack vs Smooth Surface", System Analysis
 
-### 🟩 The Smooth Surface (Scales Effortlessly)
-- **Database & Read Replica**: Supabase PostgreSQL effortlessly handles catalog search, item metadata, and historical records.
-- **Stateless REST Layer**: Express API instances can be scaled horizontally behind Render's load balancers.
-- **Fast In-Memory Lookups**: Multi-tier cache layer resolves frequent catalog requests with sub-millisecond response times.
+### The Smooth Surface (Scales Effortlessly)
+* **Database & Read Replica**: Supabase PostgreSQL effortlessly handles catalog search, item metadata, and historical records.
+* **Stateless REST Layer**: Express API instances can be scaled horizontally behind Render's load balancers.
+* **Fast In-Memory Lookups**: Multi-tier cache layer resolves frequent catalog requests with sub-millisecond response times.
 
-### 🟥 The Crack (Bottlenecks to Monitor)
-- **Gmail 500/day SMTP Quota**: The single hard ceiling. High burst volumes during club recruiting drives could saturate the daily quota.
-- **Institutional Spam Filtering**: `.ac.in` gateways occasionally sinkhole external HTML-only mail. Solved via plain-text fallbacks, explicit RFC 2822 Message-IDs, and sender reputation alignment.
+### The Crack (Bottlenecks to Monitor)
+* **Gmail 500/day SMTP Quota**: The single hard ceiling. High burst volumes during club recruiting drives could saturate the daily quota.
+* **Institutional Spam Filtering**: `.ac.in` gateways occasionally sinkhole external HTML-only mail. Solved via plain-text fallbacks, explicit RFC 2822 Message-IDs, and sender reputation alignment.
 
 ---
 
-## ⛓️ Third-Party Integration Bottlenecks & Rate Limits
+## Third-Party Integration Bottlenecks & Rate Limits
 
 | Service | Tier Limit | Consequence when Exceeded | Architectural Mitigation |
 |---------|:----------:|---------------------------|--------------------------|
@@ -626,7 +658,7 @@ A detailed derivation is available in [`docs/BOTE_ESTIMATION.md`](./docs/BOTE_ES
 
 ---
 
-## 🗄️ Database Schema
+## Database Schema
 
 ### Entity-Relationship Overview
 
@@ -712,7 +744,7 @@ CREATE INDEX IF NOT EXISTS idx_borrow_due_date  ON public.borrow_records (due_da
 
 ---
 
-## 🧪 Testing
+## Testing
 
 Run backend unit and integration suites using Node's native test runner:
 
@@ -721,25 +753,25 @@ cd backend
 npm test          # Runs all test suites (*.test.cjs)
 ```
 
-- **`test/auth.middleware.test.cjs`**: Validates JWT token verification, expiration handling, and RBAC admin route guards.
-- **`test/api.integration.test.cjs`**: End-to-end integration tests hitting auth endpoints, catalog CRUD, request-to-borrow conversions, and stock consistency.
-- **`test/bote.test.cjs`**: Verifies Back-of-the-Envelope mathematical models and capacity estimation logic.
-- **`test/system-health-check.cjs`**: Diagnostic verification script validating database connectivity, admin directory configuration, and live SMTP transport.
+* **`test/auth.middleware.test.cjs`**: Validates JWT token verification, expiration handling, and RBAC admin route guards.
+* **`test/api.integration.test.cjs`**: End-to-end integration tests hitting auth endpoints, catalog CRUD, request-to-borrow conversions, and stock consistency.
+* **`test/bote.test.cjs`**: Verifies Back-of-the-Envelope mathematical models and capacity estimation logic.
+* **`test/system-health-check.cjs`**: Diagnostic verification script validating database connectivity, admin directory configuration, and live SMTP transport.
 
 ---
 
-## 🚢 Production Deployment
+## Production Deployment
 
 The platform is structured for independent zero-downtime deployment:
 
 ### 1. Frontend → Vercel
 
 The frontend is configured via [`vercel.json`](./vercel.json):
-- Framework: `vite`
-- Build Command: `npm run build`
-- Output Directory: `dist`
-- API Proxy Rewrites: Seamlessly proxies `/api/(.*)` to `https://cicr-inventory-backend.onrender.com/api/$1` to avoid cross-origin overhead.
-- Single Page Application rewrites route all incoming requests to `/index.html`.
+* Framework: `vite`
+* Build Command: `npm run build`
+* Output Directory: `dist`
+* API Proxy Rewrites: Seamlessly proxies `/api/(.*)` to `https://cicr-inventory-backend.onrender.com/api/$1` to avoid cross-origin overhead.
+* Single Page Application rewrites route all incoming requests to `/index.html`.
 
 Deploy using the Vercel CLI or Git integration:
 ```bash
@@ -750,68 +782,68 @@ vercel --prod
 ### 2. Backend → Render
 
 The backend is configured via [`render.yaml`](./render.yaml):
-- Service Type: `web`
-- Environment: `node`
-- Root Directory: `backend`
-- Build Command: `npm install && npm run build`
-- Start Command: `npm start`
-- Auto-starts the Express REST API and spins up the cron reminder scheduler on startup.
+* Service Type: `web`
+* Environment: `node`
+* Root Directory: `backend`
+* Build Command: `npm install && npm run build`
+* Start Command: `npm start`
+* Auto-starts the Express REST API and spins up the cron reminder scheduler on startup.
 
 Configure environment variables in the Render Dashboard matching `backend/.env.example`.
 
 ---
 
-## 👥 Mentors & Core Team
+## Mentors & Core Team
 
 ### Under The Guidance of
-- **Gunjan Pal** — Management Head, CICR
+* **Gunjan Pal**, Management Head, CICR
 
 ### Core Engineering Team
-- **Vardaan Saxena** — Full-Stack Architecture, Superadmin Engine & Backend Hardening
-- **Kushagra Garg** — Core Team Developer & API Integration
-- **Mahak Katahara** — Core Team Developer & Frontend UI/Themes
-- **Divyam Jain** — Core Team Developer & Systems Verification
+* **Vardaan Saxena**, Full-Stack Architecture, Superadmin Engine & Backend Hardening
+* **Kushagra Garg**, Core Team Developer & API Integration
+* **Mahak Katahara**, Core Team Developer & Frontend UI/Themes
+* **Divyam Jain**, Core Team Developer & Systems Verification
 
 ---
 
-## ⚠️ Known Issues & Roadmap
+## Known Issues & Roadmap
 
 ### Completed Milestones
-- [x] Dual superadmin role lock (`vardaansaxena096@gmail.com` and `cicrinventory@gmail.com`).
-- [x] Institutional student email validation (`@mail.jiit.ac.in`).
-- [x] Mandatory admin approval gate barring unapproved student accounts from accessing dashboard or website.
-- [x] Two-Factor Authentication (2FA) single-use 6-digit login verification OTP popup with 5-minute expiry.
-- [x] Student lab section batches (e.g. F1, F2, B3) in registration with futuristic aesthetic placeholders.
-- [x] Vercel same-origin API proxy rewrites resolving mixed-origin connectivity and CORS latency.
-- [x] Hardware Issue Requests queue with multi-tier persistence.
-- [x] Cyber-aesthetic transactional email redesign with instant admin CCs.
-- [x] 60 FPS Sakura falling leaves engine and Avengers Assemble cinematic HUD.
-- [x] Dynamic API URL resolution (automatic local vs. production routing).
-- [x] Direct in-app inventory item deletion with cascading database removal and superadmin telemetry alerts.
-- [x] Real-time System Audit & Activity Logs Center with category filters and instant search.
-- [x] Automated 6-second background auto-synchronization between client and PostgreSQL.
-- [x] Complete database mock data purge retaining strictly authentic vault inventory and authorized administrators.
-- [x] Zero-latency optimistic 1-click issue request approvals and member authorizations with badge telemetry.
-- [x] Hardware issue request de-duplication engine with composite content keying and atomic submit locking.
-- [x] Tamper-proof read-only auto-fill for borrower identity details on hardware checkouts.
-- [x] Full 54-component robotics hardware catalog with interactive stat filter buttons and 500-unit cap.
-- [x] Resilient session recovery across Render cold starts and network failovers.
-- [x] Modernized Meet The Developers showcase with verified GitHub and LinkedIn SVG links.
+* [x] Dual superadmin role lock (`vardaansaxena096@gmail.com` and `cicrinventory@gmail.com`).
+* [x] Institutional student email validation (`@mail.jiit.ac.in`).
+* [x] Mandatory admin approval gate barring unapproved student accounts from accessing dashboard or website.
+* [x] Two-Factor Authentication (2FA) single-use 6-digit login verification OTP popup with 5-minute expiry.
+* [x] Student lab section batches (e.g. F1, F2, B3) in registration with futuristic aesthetic placeholders.
+* [x] Vercel same-origin API proxy rewrites resolving mixed-origin connectivity and CORS latency.
+* [x] Hardware Issue Requests queue with multi-tier persistence.
+* [x] Cyber-aesthetic transactional email redesign with instant admin CCs.
+* [x] 60 FPS Sakura falling leaves engine and Avengers Assemble cinematic HUD.
+* [x] Dynamic API URL resolution (automatic local vs. production routing).
+* [x] Direct in-app inventory item deletion with cascading database removal and superadmin telemetry alerts.
+* [x] Real-time System Audit & Activity Logs Center with category filters and instant search.
+* [x] Automated 6-second background auto-synchronization between client and PostgreSQL.
+* [x] Complete database mock data purge retaining strictly authentic vault inventory and authorized administrators.
+* [x] Zero-latency optimistic 1-click issue request approvals and member authorizations with badge telemetry.
+* [x] Hardware issue request de-duplication engine with composite content keying and atomic submit locking.
+* [x] Tamper-proof read-only auto-fill for borrower identity details on hardware checkouts.
+* [x] Full 54-component robotics hardware catalog with interactive stat filter buttons and 500-unit cap.
+* [x] Resilient session recovery across Render cold starts and network failovers.
+* [x] Modernized Meet The Developers showcase with verified GitHub and LinkedIn SVG links.
 
 ### Future Roadmap
-- [ ] **QR Code Component Tagging**: Dynamic QR generation for instant hardware scanning on mobile devices.
-- [ ] **Automated Export Engine**: CSV and PDF vault inventory reporting for annual club audits.
-- [ ] **WebPush Notifications**: Browser-native push alerts for upcoming return deadlines.
+* [ ] **QR Code Component Tagging**: Dynamic QR generation for instant hardware scanning on mobile devices.
+* [ ] **Automated Export Engine**: CSV and PDF vault inventory reporting for annual club audits.
+* [ ] **WebPush Notifications**: Browser-native push alerts for upcoming return deadlines.
 
 ---
 
-## 📜 License
+## License
 
-Distributed under the **MIT License**. Built with 🧠 + 🔧 by the **Creative & Innovative Cell in Robotics (CICR)**, JIIT-128.
+Distributed under the **MIT License**. Built with + by the **Creative & Innovative Cell in Robotics (CICR)**, JIIT-128.
 
 <div align="center">
 
-**© 2026 CICR Inventory Hub — Creative & Innovative Cell in Robotics**
+** 2026 CICR Inventory Hub, Creative & Innovative Cell in Robotics**
 
 [![Visit Vault](https://img.shields.io/badge/VISIT-VAULT-00f0ff?style=for-the-badge)](https://cicrinventory.vercel.app/)
 [![Live URL](cicr-inventory.vercel.app)

@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 
@@ -26,7 +26,7 @@ app.disable('x-powered-by');
 app.use((_req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('X-XSS-Protection', '0');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   if (process.env.NODE_ENV === 'production') {
@@ -43,6 +43,7 @@ const ALLOWED_ORIGINS = [
   'http://localhost:5173',
   'http://localhost:3000',
   'https://cicr-inventory.vercel.app',
+  'https://cicrinventory.vercel.app',
   'https://cicr-inventory-backend.onrender.com',
   process.env.FRONTEND_URL,
   ...configuredOrigins
@@ -81,8 +82,6 @@ app.get(['/', '/api', '/api/'], (_req: Request, res: Response) => {
   res.status(200).json({
     status: 'online',
     service: 'CICR Robotics Inventory System API',
-    version: '2.14.5',
-    uptime: Math.floor(process.uptime()),
     timestamp: new Date().toISOString()
   });
 });
@@ -184,6 +183,14 @@ app.get('/api/smtp-debug', authenticateToken, requireAdmin, async (req: Request,
       error: err.message,
     });
   }
+});
+
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  if (err?.message === 'Not allowed by CORS') {
+    return res.status(403).json({ status: 'error', message: 'Origin not allowed.' });
+  }
+  console.error('[UNHANDLED]', err);
+  return res.status(500).json({ status: 'error', message: 'Internal server error.' });
 });
 
 export { dbRead };
