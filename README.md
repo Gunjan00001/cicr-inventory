@@ -152,7 +152,7 @@ This update fixes the iPhone Safari blank developer card, restores local persist
                             ▼
 ┌────────────────────────────────────────────────────────┐
 │                      BACKEND API                       │
-│           Node.js ≥ 18 + Express 4 + TypeScript        │
+│        Node.js ≥ 22.12 + Express 4 + TypeScript        │
 │   • Auth & RBAC Middleware (Dual Superadmin Guards)    │
 │   • Inventory CRUD & Atomic Concurrency Guards         │
 │   • Hardware Issue Request Pipeline                    │
@@ -202,7 +202,7 @@ This update fixes the iPhone Safari blank developer card, restores local persist
 |-------|------------|---------|
 | **Frontend** | Vite 8, TypeScript 5, Three.js, Lucide Icons | Vanilla DOM architecture, responsive cyber glassmorphism, zero framework bloat. |
 | **VFX & Animation** | HTML5 Canvas 2D + WebGL | 60 FPS Sakura falling petal simulation & Avengers Arc Reactor / Vibranium shield HUD. |
-| **Backend** | Node.js ≥ 18, Express 4, TypeScript 5 | Modular route architecture (`auth`, `inventory`, `borrow`, `dashboard`, `system`). |
+| **Backend** | Node.js ≥ 22.12, Express 4, TypeScript 5 | Modular route architecture (`auth`, `inventory`, `borrow`, `dashboard`, `system`). |
 | **Database** | Supabase (PostgreSQL) | PostgREST connection with `dbRead` (replica/primary) and `dbWrite` (primary) separation. |
 | **Multi-Tier Sync** | JSON State Layer | Fallback storage for offline/resilient recovery (`hardware_requests_data.json`, `user_approval_data.json`). |
 | **Cache & Queues** | Redis via `ioredis` + `connect-redis` | Session persistence, 30-second inventory response cache, BullMQ async worker queues. |
@@ -292,25 +292,40 @@ CICR_Inventory/
 
 ### Prerequisites
 
-* **Node.js**: `≥ 18.0.0` (tested on Node v20 & v24)
-* **npm**: `≥ 9.0.0`
+* **Node.js**: `≥ 22.12.0` (tested with Node 22.12)
+* **npm**: `≥ 10.9.0`
 * **Supabase Account**: A PostgreSQL project with PostgREST enabled.
 * **Gmail Account**: With 2-Factor Authentication enabled and a 16-character **App Password** generated.
 * **Redis** *(Optional)*: Local Redis instance or cloud provider (e.g. Upstash). In-memory fallback activates automatically if omitted.
 
-### 1. Clone & Install Dependencies
+### Toolchain
+
+The repository pins Node 22.12.0. Install nvm and select the pinned version before installing dependencies:
+
+```bash
+nvm install
+nvm use
+node -v
+```
+
+On Windows, use nvm-windows and run `nvm use 22.12.0`.
+
+Install exactly from the lockfiles:
+
+```bash
+npm ci
+npm ci --prefix backend
+```
+
+Do not use `npm install` for setup because it can update the lockfiles.
+
+Redis is optional. Without `REDIS_URL`, the backend uses its in-memory fallback. For Redis-backed testing, install Redis 7.x locally or point `REDIS_URL` at a hosted instance.
+
+### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/simplyvardaan/CICR_Inventory.git
 cd CICR_Inventory
-
-# Install Frontend dependencies
-npm install
-
-# Install Backend dependencies
-cd backend
-npm install
-cd ..
 ```
 
 ### 2. Configure Backend Environment

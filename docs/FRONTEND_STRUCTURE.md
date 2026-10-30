@@ -59,7 +59,7 @@ Read this together with [`../AGENT.md`](../AGENT.md).
 ## Verify a change
 
 ```bash
-npm install          # root deps (first time)
+npm ci               # root deps from the lockfile
 npx tsc -p tsconfig.json   # typecheck (tsconfig has noEmit)
 npm run build              # tsc + vite production build
 npm run dev:frontend       # Vite dev server on http://localhost:5173

@@ -281,7 +281,7 @@ All `@jiit.ac.in` students share password: `JiitCICR@2026!`
 ```bash
 cd backend
 cp .env.example .env    # fill in secrets
-npm install
+npm ci
 
 # Development (with hot reload)
 npm run dev             # nodemon + ts-node → http://localhost:5000

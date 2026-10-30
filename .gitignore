@@ -16,6 +16,7 @@ dist-ssr/
 build/
 out/
 backend/dist/
+graphify-out/
 
 # Environment Files & Secrets (NEVER COMMIT THESE)
 .env
@@ -40,7 +41,8 @@ backend/*_data.json
 _mailtest.cjs
 *.tmp
 *.py
-backend/scripts/
+backend/scripts/*
+!backend/scripts/ensure-render-dist.cjs
 backend/src/scripts/send-*
 backend/src/scripts/*credentials*
 

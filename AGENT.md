@@ -115,17 +115,35 @@ Known caveats an agent should be aware of before changing DB-touching code:
 
 ## 7. Local setup
 
-```bash
-# Frontend
-npm install
-npm run dev            # Vite dev server, usually http://localhost:5173
+The repository pins Node 22.12.0. Select it before installing:
 
-# Backend
-cd backend
-npm install
-cp .env.example .env   # fill in SUPABASE_URL, SUPABASE_KEY, JWT_SECRET, PORT
-npm run dev            # nodemon + ts-node, default http://localhost:5000
+```bash
+nvm install
+nvm use
+node -v                # v22.12.0
 ```
+
+Install exactly from the lockfiles:
+
+```bash
+npm ci
+npm ci --prefix backend
+```
+
+Start the frontend:
+
+```bash
+npm run dev:frontend   # Vite dev server, usually http://localhost:5173
+```
+
+Start the backend:
+
+```bash
+cp backend/.env.example backend/.env   # fill in SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, JWT_SECRET, PORT
+npm run dev --prefix backend           # nodemon + ts-node, default http://localhost:5000
+```
+
+Redis is optional. Without `REDIS_URL`, the backend uses its in-memory fallback.
 
 ## 8. Conventions for agents working in this repo
 
