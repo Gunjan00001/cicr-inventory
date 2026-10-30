@@ -292,7 +292,7 @@ CICR_Inventory/
 
 ### Prerequisites
 
-* **Node.js**: `≥ 22.12.0` (tested with Node 22.12)
+* **Node.js**: `≥ 22.12.0` (pinned in `.nvmrc`)
 * **npm**: `≥ 10.9.0`
 * **Supabase Account**: A PostgreSQL project with PostgREST enabled.
 * **Gmail Account**: With 2-Factor Authentication enabled and a 16-character **App Password** generated.
